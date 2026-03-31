@@ -1,0 +1,1848 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>คำมอด — ราชาทุ่งสาป</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&family=Kanit:wght@300;400;700;900&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;-webkit-touch-callout:none;touch-action:none;}
+body{background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:'Kanit',sans-serif;overflow:hidden;}
+
+/* ── GAME CONTAINER ─────────────────────────── */
+#G{position:relative;width:360px;height:620px;background:#0a0a0a;overflow:hidden;border:1px solid #1a1a1a;box-shadow:0 0 60px rgba(180,0,0,.1);}
+
+/* ── FADE ───────────────────────────────────── */
+#fade{position:absolute;inset:0;background:#000;z-index:9500;pointer-events:none;transition:opacity .5s;}
+
+/* ── TITLE ──────────────────────────────────── */
+#title{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 35%,#1a0500,#000);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9000;}
+.t-main{font-size:60px;font-weight:900;color:#fff;letter-spacing:8px;text-shadow:0 0 40px rgba(200,0,0,.8);animation:tglow 2s ease-in-out infinite alternate;}
+@keyframes tglow{from{text-shadow:0 0 20px rgba(200,0,0,.5);}to{text-shadow:0 0 60px rgba(200,0,0,1),0 0 100px rgba(200,0,0,.3);}}
+.t-sub{font-size:11px;color:#700;letter-spacing:5px;margin-top:6px;font-weight:300;}
+.t-hr{width:100px;height:1px;background:linear-gradient(90deg,transparent,#700,transparent);margin:16px 0;}
+.t-eye{font-size:28px;margin-bottom:14px;animation:eblink 3s infinite;}
+@keyframes eblink{0%,88%,100%{transform:scaleY(1);}93%{transform:scaleY(.1);}}
+#btn-start{background:transparent;border:1px solid #600;color:#c00;font-family:'Kanit';font-size:13px;font-weight:700;padding:11px 36px;letter-spacing:3px;cursor:pointer;animation:pulse 1.4s infinite;}
+#btn-start:active{background:#200;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.t-ver{position:absolute;bottom:10px;font-size:9px;color:#222;letter-spacing:2px;}
+
+/* ── HUD ────────────────────────────────────── */
+#hud{position:absolute;top:0;left:0;right:0;height:34px;background:rgba(0,0,0,.92);border-bottom:1px solid #200;z-index:500;display:none;align-items:center;padding:0 8px;gap:6px;}
+#ch-tag{font-size:8px;color:#500;letter-spacing:2px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#hp-wrap{width:55px;height:5px;background:#1a0000;border:1px solid #300;border-radius:3px;overflow:hidden;flex-shrink:0;}
+#hp-fill{height:100%;background:linear-gradient(90deg,#800,#f00);transition:width .3s;}
+#hud-items{font-size:10px;color:#c8a000;flex-shrink:0;}
+/* checkpoint badge */
+#ckpt-badge{position:absolute;top:34px;left:50%;transform:translateX(-50%);background:rgba(0,100,0,.85);border:1px solid #0f0;border-radius:4px;padding:3px 12px;font-size:10px;color:#8f8;letter-spacing:1px;z-index:600;opacity:0;transition:opacity .4s;pointer-events:none;}
+
+/* ── SCENE BASE ─────────────────────────────── */
+.sc{position:absolute;left:0;right:0;top:34px;bottom:110px;display:none;overflow:hidden;}
+.sc.on{display:block;}
+
+/* ── TEXTBOX ─────────────────────────────────── */
+#tb{position:absolute;bottom:0;left:0;right:0;height:110px;background:rgba(4,2,2,.97);border-top:1px solid #300;z-index:2000;padding:8px 12px 6px;display:none;flex-direction:column;}
+#tb-top{display:flex;align-items:center;gap:7px;margin-bottom:5px;}
+#tb-ico{width:28px;height:28px;border-radius:50%;border:1.5px solid #400;background:#1a1209;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+#tb-name{font-size:10px;color:#c00;letter-spacing:2px;font-weight:700;}
+#tb-txt{font-size:12.5px;color:#ddd;line-height:1.6;flex:1;font-family:'Sarabun';font-weight:300;overflow:hidden;}
+#tb-arr{position:absolute;bottom:6px;right:10px;font-size:14px;color:#500;animation:blink .8s infinite;cursor:pointer;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.1;}}
+#tb-choices{display:none;flex-direction:column;gap:4px;margin-top:4px;}
+.copt{background:rgba(25,0,0,.8);border:1px solid #400;color:#ccc;padding:5px 10px;border-radius:3px;font-family:'Sarabun';font-size:11.5px;cursor:pointer;text-align:left;transition:all .15s;}
+.copt:active{background:#300;color:#fff;}
+
+/* ── CONTROLS ────────────────────────────────── */
+#ctrls{position:absolute;bottom:115px;left:0;right:0;height:0;display:none;justify-content:space-between;padding:0 14px;z-index:1500;align-items:flex-end;pointer-events:none;}
+.dpad{display:grid;grid-template-columns:repeat(3,38px);grid-template-rows:repeat(2,38px);gap:4px;pointer-events:all;}
+.dbtn{width:38px;height:38px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:8px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.35);font-size:15px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.dbtn:active{background:rgba(255,255,255,.14);}
+#act-side{display:flex;flex-direction:column;align-items:center;gap:5px;pointer-events:all;}
+#btn-act{width:58px;height:58px;background:rgba(130,0,0,.65);border:2px solid #c00;border-radius:50%;color:#fff;font-size:8px;font-weight:700;text-align:center;display:none;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 0 16px rgba(200,0,0,.28);-webkit-tap-highlight-color:transparent;line-height:1.2;}
+#btn-act:active{transform:scale(.93);}
+#act-lbl{font-size:8px;color:#444;pointer-events:none;}
+
+/* ── STEALTH/FIGHT HUD ────────────────────────── */
+#stealthbar{position:absolute;top:2px;right:6px;width:70px;height:5px;background:#111;border:1px solid #333;border-radius:3px;overflow:hidden;z-index:30;display:none;}
+#stealth-fill{height:100%;background:linear-gradient(90deg,#00f,#08f);transition:width .2s;}
+#alert-badge{position:absolute;top:38px;right:8px;font-size:9px;font-weight:700;letter-spacing:1px;z-index:40;display:none;}
+
+/* ── PIXEL SPRITE ────────────────────────────── */
+.spr{position:absolute;width:24px;height:40px;}
+.spr-body{position:absolute;bottom:0;left:2px;width:20px;height:22px;background:#3a2a10;border:2px solid #000;border-radius:3px 3px 0 0;}
+.spr-head{position:absolute;top:0;left:1px;width:22px;height:18px;background:#c87030;border:2px solid #000;border-radius:50% 50% 35% 35%;}
+.spr-el{position:absolute;width:4px;height:4px;background:#000;border-radius:50%;top:6px;}
+.spr-el.L{left:4px;}.spr-el.R{right:4px;}
+.spr-mouth{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:9px;height:2px;background:#500;border-radius:2px;}
+.spr-hat{position:absolute;top:-8px;left:-1px;width:24px;height:9px;background:#1a1000;border:2px solid #000;border-radius:3px 3px 0 0;}
+.spr-leg{position:absolute;bottom:-11px;width:9px;height:12px;background:#2a1a08;border:2px solid #000;border-radius:0 0 3px 3px;transform-origin:top center;}
+.spr-leg.L{left:2px;}.spr-leg.R{right:2px;}
+.km-leg-l.walk,.km-leg-r.walk,.spr-leg.walk{animation-play-state:running;}
+.walk .spr-leg.L{animation:wL .28s infinite;}.walk .spr-leg.R{animation:wR .28s infinite;}
+@keyframes wL{0%,100%{transform:rotate(-22deg);}50%{transform:rotate(22deg);}}
+@keyframes wR{0%,100%{transform:rotate(22deg);}50%{transform:rotate(-22deg);}}
+.talk .spr-mouth{animation:mtkl .11s infinite alternate;}
+@keyframes mtkl{from{height:2px;}to{height:8px;border-radius:50%;}}
+/* crouching stealth */
+.spr.crouch .spr-body{height:14px;}
+.spr.crouch .spr-head{top:4px;}
+.spr.crouch .spr-leg{display:none;}
+
+/* ── NPC sprite ──────────────────────────────── */
+.npc-spr{position:absolute;cursor:pointer;}
+.npc-bubble{position:absolute;top:-22px;left:50%;transform:translateX(-50%);background:#111;border:1px solid #400;border-radius:3px;padding:2px 6px;font-size:9px;color:#c00;white-space:nowrap;animation:bb 1.2s ease-in-out infinite;display:none;}
+@keyframes bb{0%,100%{transform:translateX(-50%) translateY(0);}50%{transform:translateX(-50%) translateY(-3px);}}
+
+/* ── SCENES ──────────────────────────────────── */
+/* SC01: highway */
+#sc01{background:linear-gradient(180deg,#04000a,#0c0008 40%,#080402 70%,#040200);}
+#sc01 .sky-red{position:absolute;top:0;left:0;right:0;height:45%;background:radial-gradient(ellipse at 50% 0%,rgba(160,0,0,.32),transparent 70%);}
+#sc01 .road{position:absolute;bottom:0;left:0;right:0;height:130px;background:linear-gradient(180deg,#111,#080808);border-top:2px solid #1a1a1a;}
+.rd-line{position:absolute;left:50%;width:4px;background:#232323;transform:translateX(-50%);animation:rdfl .2s linear infinite;}
+@keyframes rdfl{from{top:-40px;}to{top:130px;}}
+#sc01 .cabin{position:absolute;bottom:0;left:16px;right:16px;height:75px;background:linear-gradient(180deg,#1a1209,#0d0d0d);border-top:2px solid #222;border-radius:4px 4px 0 0;}
+#sc01 .wheel{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);width:55px;height:55px;border:5px solid #2a2a2a;border-bottom-color:transparent;border-radius:50%;}
+#km-drive{position:absolute;bottom:75px;left:50%;transform:translateX(-50%);}
+
+/* SC02: FPV */
+#sc02{background:#04030a;}
+#sc02 .ground{position:absolute;bottom:0;left:0;right:0;height:110px;background:linear-gradient(180deg,#0a0a0a,#000);border-top:2px solid #111;}
+#shadow-ent{position:absolute;right:-200px;top:20px;width:90px;height:210px;transition:right 1.8s ease-in-out;}
+.ent-body{width:100%;height:100%;background:rgba(0,0,0,.92);filter:blur(6px);border-radius:40% 40% 20% 20%;}
+.ent-eye{position:absolute;width:9px;height:9px;background:#f00;border-radius:50%;top:30px;box-shadow:0 0 14px #f00;animation:eg .35s infinite alternate;}
+@keyframes eg{from{box-shadow:0 0 7px #f00;}to{box-shadow:0 0 22px #f00,0 0 40px rgba(255,0,0,.3);}}
+.ent-eye.L{left:18px;}.ent-eye.R{right:18px;}
+#fpv-chick{position:absolute;font-size:55px;top:70px;left:145px;display:none;animation:chfly .7s ease-in forwards;}
+@keyframes chfly{0%{transform:translate(0,0) rotate(0);opacity:1;}100%{transform:translate(-40px,-110px) rotate(-360deg);opacity:0;font-size:16px;}}
+
+/* SC03: prison */
+#sc03{background:#0a0806;}
+.stone{position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 38px,rgba(18,10,4,.8) 38px,rgba(18,10,4,.8) 40px),repeating-linear-gradient(90deg,transparent,transparent 48px,rgba(18,10,4,.8) 48px,rgba(18,10,4,.8) 50px);background-color:#0e0b08;}
+#prison-bars{position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(48,36,18,.95) 0,rgba(48,36,18,.95) 11px,transparent 11px,transparent 48px);z-index:15;transition:transform 1.3s ease-in-out,opacity .7s;}
+#prison-bars.open{transform:translateY(-110%);opacity:0;}
+.cell-floor{position:absolute;bottom:0;left:0;right:0;height:55px;background:linear-gradient(180deg,#0d0906,#050403);}
+.ptorch{position:absolute;top:18px;font-size:20px;animation:tf .11s infinite alternate;z-index:20;}
+@keyframes tf{from{opacity:.6;}to{opacity:1;filter:brightness(1.4);}}
+#hammer-obj{position:absolute;bottom:65px;left:100px;font-size:38px;display:none;animation:flt 1.8s ease-in-out infinite;filter:drop-shadow(0 0 10px rgba(255,140,0,.45));cursor:pointer;z-index:30;}
+@keyframes flt{0%,100%{transform:translateY(0);}50%{transform:translateY(-7px);}}
+
+/* lock overlay */
+#lock-ov{position:absolute;inset:0;background:rgba(0,0,0,.96);z-index:4000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;}
+.lk-title{font-size:14px;color:#c00;letter-spacing:3px;}
+.lk-desc{font-size:9px;color:#555;text-align:center;}
+#lk-bar{position:relative;width:250px;height:22px;background:#111;border:2px solid #333;border-radius:20px;overflow:hidden;}
+#lk-zone{position:absolute;height:100%;width:52px;background:rgba(0,200,0,.25);border:1px solid #0c0;border-radius:20px;}
+#lk-needle{position:absolute;top:0;width:7px;height:100%;background:#f00;border-radius:20px;box-shadow:0 0 7px #f00;}
+#lk-btn{padding:11px 40px;background:#900;border:2px solid #f00;color:#fff;font-family:'Kanit';font-weight:700;font-size:13px;border-radius:7px;cursor:pointer;letter-spacing:1px;}
+#lk-combo{display:flex;gap:7px;}
+.cl{width:11px;height:11px;border-radius:50%;background:#1a0000;border:1px solid #400;}
+.cl.on{background:#0f0;box-shadow:0 0 7px #0f0;border-color:#0f0;}
+#lk-tries{font-size:10px;color:#444;}
+
+/* SC04-SC06: scrollable world */
+.world-sc{background:linear-gradient(180deg,#020802,#0a1005 50%,#050803);}
+.world-floor{position:absolute;bottom:0;left:0;right:0;height:50px;background:linear-gradient(180deg,#0a1005,#050803);border-top:2px solid #0d1508;}
+.w-scroll{position:absolute;bottom:0;left:0;height:100%;}
+.w-tree{position:absolute;bottom:50px;font-size:28px;opacity:.65;}
+.w-house{position:absolute;bottom:50px;}
+.h-roof{width:0;height:0;border-left:34px solid transparent;border-right:34px solid transparent;border-bottom:28px solid #1a0a05;margin-left:-4px;}
+.h-body{width:56px;height:46px;background:#1a1208;border:2px solid #222;position:relative;}
+.h-win{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:14px;height:12px;background:rgba(200,160,0,.2);border:1px solid #c8a000;}
+
+/* SC07: ritual */
+#sc07{background:#04000a;}
+.r-ground{position:absolute;bottom:0;left:0;right:0;height:75px;background:linear-gradient(180deg,#090508,#030203);border-top:2px solid #1a0020;}
+.r-candle{position:absolute;bottom:74px;font-size:22px;animation:cf .13s infinite alternate;}
+@keyframes cf{from{opacity:.65;}to{opacity:1;filter:brightness(1.35);}}
+#r-altar{position:absolute;bottom:76px;left:50%;transform:translateX(-50%);width:75px;height:75px;border:2px solid rgba(140,0,140,.4);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;animation:rspin 9s linear infinite;}
+@keyframes rspin{from{transform:translateX(-50%) rotate(0);}to{transform:translateX(-50%) rotate(360deg);}}
+
+/* SC08: rice field with stealth */
+#sc08{background:#020802;}
+#field-wrap{position:absolute;inset:0;overflow:hidden;}
+#field-floor{position:absolute;bottom:0;left:0;right:0;height:48px;background:#050805;}
+#rice-layer{position:absolute;bottom:46px;left:0;height:155px;}
+.r-stalk{position:absolute;bottom:0;width:5px;background:linear-gradient(180deg,#1a3a10,#0d1f08);border-radius:2px 2px 0 0;}
+.r-stalk::after{content:'';position:absolute;top:0;left:-3px;width:10px;height:4px;background:#243c18;border-radius:50%;}
+#field-fog{position:absolute;inset:0;background:linear-gradient(180deg,rgba(2,10,2,.96) 0%,rgba(2,10,2,.35) 55%,transparent 70%);pointer-events:none;z-index:8;}
+.yant-pick{position:absolute;bottom:56px;font-size:19px;z-index:12;animation:flt 1.7s ease-in-out infinite;filter:drop-shadow(0 0 7px rgba(200,200,0,.6));}
+.obs{position:absolute;bottom:46px;width:16px;height:15px;background:#1a1a14;border:2px solid #2a2a20;border-radius:3px;z-index:10;}
+#praai-spr{position:absolute;bottom:46px;width:26px;height:42px;z-index:18;}
+.praai-inner{width:100%;height:100%;background:#030103;border:2px solid #300;border-radius:5px;position:relative;}
+.p-eye{position:absolute;width:6px;height:6px;background:#f00;border-radius:50%;top:9px;box-shadow:0 0 10px #f00;animation:eg .4s infinite alternate;}
+.p-eye.L{left:2px;}.p-eye.R{right:2px;}
+#field-stam{position:absolute;top:2px;left:4px;width:76px;height:4px;background:#1a0000;border:1px solid #300;border-radius:3px;z-index:30;overflow:hidden;}
+#stam-fill{height:100%;background:linear-gradient(90deg,#080,#0f0);transition:width .1s;}
+#field-yants{position:absolute;top:2px;right:4px;font-size:10px;color:#c8a000;z-index:30;}
+/* hide/bush spots */
+.bush-hide{position:absolute;bottom:46px;font-size:32px;z-index:11;opacity:.85;filter:drop-shadow(0 0 6px rgba(0,200,0,.5));animation:bush-pulse 2s ease-in-out infinite;}
+@keyframes bush-pulse{0%,100%{filter:drop-shadow(0 0 4px rgba(0,200,0,.4));}50%{filter:drop-shadow(0 0 12px rgba(0,255,0,.7));}}
+.bush-hide::after{content:'HIDE';position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:7px;color:rgba(0,255,0,.6);font-family:'Kanit';letter-spacing:1px;white-space:nowrap;}
+
+/* SC09: boss */
+#sc09{background:#050200;}
+.boss-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,#1a0500,#000);}
+.boss-pile{position:absolute;bottom:0;left:0;right:0;height:75px;background:linear-gradient(180deg,#221800,#0d0800);border-top:2px solid #1a1000;}
+#boss-spr{position:absolute;top:25px;left:50%;transform:translateX(-50%);text-align:center;z-index:18;}
+#boss-body{width:52px;height:86px;background:linear-gradient(180deg,#1a0800,#080300);border:3px solid #400;border-radius:8px 8px 4px 4px;margin:0 auto;position:relative;animation:bbr 2s ease-in-out infinite;}
+@keyframes bbr{0%,100%{transform:scaleY(1);}50%{transform:scaleY(1.04);}}
+.b-eye{position:absolute;width:12px;height:12px;background:red;border-radius:50%;top:20px;box-shadow:0 0 16px red;animation:eg .3s infinite alternate;}
+.b-eye.L{left:6px;}.b-eye.R{right:6px;}
+#boss-name{font-size:9px;color:#800;letter-spacing:3px;margin-bottom:3px;}
+#boss-hp-w{width:120px;height:7px;background:#1a0000;border:1px solid #500;border-radius:4px;overflow:hidden;margin:6px auto 0;}
+#boss-hp-f{height:100%;background:linear-gradient(90deg,#600,#f00);transition:width .5s;}
+#family-ico{position:absolute;bottom:80px;right:14px;font-size:26px;opacity:.8;}
+#km-boss{position:absolute;bottom:77px;left:26px;}
+
+/* final choice */
+#final-choice{position:absolute;inset:0;background:rgba(0,0,0,.93);z-index:4000;display:none;flex-direction:column;align-items:center;justify-content:center;padding:22px;gap:13px;}
+.fc-desc{font-size:12px;color:#aaa;text-align:center;line-height:1.8;font-family:'Sarabun';font-weight:300;}
+.fc-btn{width:100%;padding:13px;border-radius:5px;border:none;font-family:'Kanit';font-weight:700;font-size:13px;cursor:pointer;transition:all .2s;}
+#fc-dark{background:linear-gradient(135deg,#2a0000,#500);color:#ff8080;border:2px solid #800;}
+#fc-good{background:linear-gradient(135deg,#021002,#0d2008);color:#80ff80;border:2px solid #1a4010;}
+
+/* SC10: apartment */
+#sc10{background:#050608;}
+#apt-hall{position:absolute;inset:0;background:linear-gradient(180deg,#050608,#070710);}
+#apt-scroll{position:absolute;bottom:0;left:0;height:100%;}
+.apt-wall-line{position:absolute;top:0;bottom:0;width:100%;background:repeating-linear-gradient(90deg,#0a0a0c,#0a0a0c 1px,transparent 1px,transparent 58px);}
+.apt-door{position:absolute;bottom:42px;width:42px;height:66px;background:#0d0e10;border:2px solid #1a1a20;border-radius:3px 3px 0 0;}
+.apt-door-n{position:absolute;top:7px;left:50%;transform:translateX(-50%);font-size:8px;color:#333;}
+.apt-door-k{position:absolute;top:50%;right:5px;transform:translateY(-50%);width:7px;height:7px;background:#2a2a2a;border-radius:50%;}
+#door303{position:absolute;bottom:42px;width:42px;height:66px;background:#0f1012;border:2px solid #c8a000;border-radius:3px 3px 0 0;box-shadow:0 0 14px rgba(200,160,0,.14);cursor:pointer;z-index:35;}
+#door303-n{position:absolute;top:7px;left:50%;transform:translateX(-50%);font-size:8px;color:#c8a000;}
+#door303-k{position:absolute;top:50%;right:5px;transform:translateY(-50%);width:7px;height:7px;background:#c8a000;border-radius:50%;box-shadow:0 0 5px #c8a000;}
+.apt-floor{position:absolute;bottom:0;left:0;right:0;height:42px;background:linear-gradient(180deg,#0a0c0d,#050608);border-top:2px solid #111;}
+
+/* ghost reveal */
+#ghost-rev{position:absolute;inset:0;display:none;z-index:7000;background:rgba(0,0,0,0);transition:background 1.5s;}
+#ghost-ico{position:absolute;top:28%;left:50%;transform:translateX(-50%);font-size:78px;opacity:0;filter:drop-shadow(0 0 28px rgba(200,200,255,.9));animation:ghapp 2s ease-in-out forwards;}
+@keyframes ghapp{0%{opacity:0;transform:translateX(-50%) scale(.4) translateY(40px);}60%{opacity:1;transform:translateX(-50%) scale(1.08) translateY(-8px);}100%{opacity:.9;transform:translateX(-50%) scale(1);}}
+/* room 303 + closeup */
+#room303-overlay{animation:roomFade .4s ease-in;}
+@keyframes roomFade{from{opacity:0;}to{opacity:1;}}
+#km-closeup{animation:closeupPop .5s cubic-bezier(.175,.885,.32,1.275);}
+@keyframes closeupPop{from{opacity:0;transform:scale(.94);}to{opacity:1;transform:scale(1);}}
+#km-face-big>div{animation:faceBreath 2.5s ease-in-out infinite;}
+@keyframes faceBreath{0%,100%{transform:translateY(0);}50%{transform:translateY(-3px);}}
+#tbc-wrap{position:absolute;bottom:25%;left:50%;transform:translateX(-50%);text-align:center;opacity:0;animation:tba 1s ease-in 2.6s forwards;}
+@keyframes tba{from{opacity:0;transform:translateX(-50%) translateY(18px);}to{opacity:1;transform:translateX(-50%);}}
+#tbc-t{font-size:20px;font-weight:900;color:#fff;letter-spacing:4px;}
+#tbc-s{font-size:10px;color:#444;letter-spacing:3px;margin-top:7px;}
+
+/* ending */
+#end-sc{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;padding:26px;text-align:center;z-index:8500;}
+#end-ico{font-size:68px;margin-bottom:14px;animation:epop .5s cubic-bezier(.175,.885,.32,1.275);}
+@keyframes epop{from{transform:scale(0);opacity:0;}to{transform:scale(1);opacity:1;}}
+#end-ttl{font-size:19px;font-weight:900;letter-spacing:4px;margin-bottom:10px;}
+#end-msg{font-size:11.5px;color:#888;line-height:1.9;font-family:'Sarabun';font-weight:300;}
+#btn-restart{margin-top:24px;padding:9px 30px;background:transparent;border:1px solid #333;color:#555;font-family:'Kanit';font-size:11px;border-radius:4px;cursor:pointer;letter-spacing:2px;}
+#btn-restart:active{border-color:#fff;color:#fff;}
+
+/* misc fx */
+.ptcl{position:absolute;pointer-events:none;z-index:9200;animation:pfx 1s ease-out forwards;font-size:16px;}
+@keyframes pfx{from{opacity:1;transform:translate(0,0) scale(1);}to{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.2);}}
+#flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:8900;transition:opacity .08s;}
+.dmg{position:absolute;font-size:13px;font-weight:900;animation:dmgfx .75s ease-out forwards;pointer-events:none;z-index:9100;}
+@keyframes dmgfx{from{opacity:1;transform:translateY(0);}to{opacity:0;transform:translateY(-35px);}}
+#notif{position:absolute;top:34px;left:0;right:0;background:rgba(0,0,0,.9);border-bottom:1px solid #400;padding:6px 12px;font-size:10px;color:#c8a000;z-index:3000;transform:translateY(-100%);transition:transform .25s;text-align:center;pointer-events:none;}
+#notif.show{transform:translateY(0);}
+/* screen shake */
+@keyframes shake{0%,100%{transform:translate(0,0);}25%{transform:translate(-4px,1px);}75%{transform:translate(4px,-1px);}}
+</style>
+</head>
+<body>
+<div id="G">
+  <div id="fade" style="opacity:1"></div>
+  <div id="flash"></div>
+  <div id="notif"></div>
+  <div id="ckpt-badge">✦ CHECKPOINT</div>
+
+  <!-- TITLE -->
+  <div id="title">
+    <div class="t-main">คำมอด</div>
+    <div class="t-sub">ราชาทุ่งสาป</div>
+    <div class="t-hr"></div>
+    <div class="t-eye">👁</div>
+    <button id="btn-start" onclick="startGame()">[ เริ่มเกม ]</button>
+    <div class="t-ver">V 3.0 — FULL STORY</div>
+  </div>
+
+  <!-- HUD -->
+  <div id="hud">
+    <span id="ch-tag">Chapter 1</span>
+    <div id="hp-wrap"><div id="hp-fill" style="width:100%"></div></div>
+    <span id="hud-items">🔨0 📜0</span>
+  </div>
+
+  <!-- SCENES -->
+  <!-- SC01: highway night -->
+  <div id="sc01" class="sc">
+    <div class="sky-red"></div>
+    <div id="sc01-stars"></div>
+    <div class="road"><div class="rd-line" style="height:50px"></div><div class="rd-line" style="height:38px;animation-delay:-.1s"></div></div>
+    <div class="cabin"><div class="wheel"></div></div>
+    <div id="km-drive">
+      <div style="position:relative;width:48px;height:58px;">
+        <div style="position:absolute;top:-11px;left:-1px;width:50px;height:12px;background:#1a1000;border:2px solid #000;border-radius:3px 3px 0 0;"></div>
+        <div style="width:48px;height:58px;background:#c87030;border:3px solid #000;border-radius:16px 16px 8px 8px;position:relative;">
+          <div id="km-eye-l" style="position:absolute;top:13px;left:8px;width:6px;height:6px;background:#000;border-radius:50%;"></div>
+          <div id="km-eye-r" style="position:absolute;top:13px;right:8px;width:6px;height:6px;background:#000;border-radius:50%;"></div>
+          <div id="km-mouth" style="position:absolute;bottom:12px;left:50%;transform:translateX(-50%);width:16px;height:3px;background:#500;border-radius:2px;transition:all .1s;"></div>
+        </div>
+      </div>
+    </div>
+    <div id="radio-txt" style="position:absolute;top:55px;right:18px;font-size:8px;color:#2a2a2a;letter-spacing:1px;animation:blink .09s infinite;">📻 zzz——</div>
+  </div>
+
+  <!-- SC02: FPV attack -->
+  <div id="sc02" class="sc">
+    <div class="ground"></div>
+    <div id="fpv-chick"></div>
+    <div id="shadow-ent">
+      <div class="ent-body"></div>
+      <div class="ent-eye L"></div>
+      <div class="ent-eye R"></div>
+    </div>
+  </div>
+
+  <!-- SC03: prison cell -->
+  <div id="sc03" class="sc">
+    <div class="stone"></div>
+    <div class="ptorch" style="left:14px">🕯</div>
+    <div class="ptorch" style="right:14px">🕯</div>
+    <div style="position:absolute;bottom:62px;left:28px;font-size:17px;opacity:.3;">💀</div>
+    <div style="position:absolute;bottom:60px;right:48px;font-size:14px;opacity:.3;transform:rotate(30deg);">🦴</div>
+    <div class="cell-floor"></div>
+    <div id="prison-bars"></div>
+    <div id="hammer-obj" onclick="pickHammer()">🔨</div>
+    <!-- km in cell -->
+    <div id="km-cell" style="position:absolute;bottom:57px;left:130px;">
+      <div class="spr" id="km-spr-cell">
+        <div class="spr-hat"></div>
+        <div class="spr-head"><div class="spr-el L"></div><div class="spr-el R"></div><div class="spr-mouth"></div></div>
+        <div class="spr-body"></div>
+        <div class="spr-leg L" id="ll-c"></div><div class="spr-leg R" id="lr-c"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SC04-06: village, market, shrine (built dynamically) -->
+  <div id="sc04" class="sc world-sc"></div>
+  <div id="sc05" class="sc world-sc"></div>
+
+  <!-- SC07: ritual shrine -->
+  <div id="sc07" class="sc">
+    <div class="r-ground"></div>
+    <div id="r-altar">☯</div>
+    <div id="km-shrine" style="position:absolute;bottom:76px;left:44px;">
+      <div class="spr"><div class="spr-hat"></div><div class="spr-head"><div class="spr-el L"></div><div class="spr-el R"></div><div class="spr-mouth"></div></div><div class="spr-body"></div></div>
+    </div>
+  </div>
+
+  <!-- SC08: rice field (stealth+fight) -->
+  <div id="sc08" class="sc">
+    <div id="field-wrap">
+      <div id="rice-layer"></div>
+      <div id="field-floor"></div>
+      <div id="field-fog"></div>
+      <div id="field-stam"><div id="stam-fill"></div></div>
+      <div id="field-yants">📜 0/3</div>
+      <div id="stealthbar"><div id="stealth-fill"></div></div>
+      <div id="alert-badge"></div>
+      <div id="praai-spr">
+        <div class="praai-inner"><div class="p-eye L"></div><div class="p-eye R"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SC09: boss fight -->
+  <div id="sc09" class="sc">
+    <div class="boss-bg"></div>
+    <div class="boss-pile"></div>
+    <div id="family-ico">👨‍👩‍👧</div>
+    <div id="boss-spr">
+      <div id="boss-name">— หมอผีคลั่ง —</div>
+      <div id="boss-body"><div class="b-eye L"></div><div class="b-eye R"></div></div>
+      <div id="boss-hp-w"><div id="boss-hp-f" style="width:100%"></div></div>
+    </div>
+    <div id="km-boss">
+      <div class="spr"><div class="spr-hat"></div><div class="spr-head"><div class="spr-el L"></div><div class="spr-el R"></div><div class="spr-mouth"></div></div><div class="spr-body"></div><div class="spr-leg L"></div><div class="spr-leg R"></div></div>
+    </div>
+    <div id="final-choice">
+      <div style="font-size:26px">⚔️</div>
+      <div class="fc-desc" id="fc-desc"></div>
+      <button class="fc-btn" id="fc-dark" onclick="choosePath('dark')">🩸 ใช้วิชาโจรสายดำ<br><small style="font-weight:400;opacity:.6">ชนะแน่ แต่วิญญาณเสี่ยง</small></button>
+      <button class="fc-btn" id="fc-good" onclick="choosePath('good')">🔨 ใช้สติและค้อนสนิม<br><small style="font-weight:400;opacity:.6">ยาก แต่ยังเป็นตัวเอง</small></button>
+    </div>
+  </div>
+
+  <!-- SC10: apartment -->
+  <div id="sc10" class="sc">
+    <div id="apt-hall"></div>
+  </div>
+
+  <!-- GHOST REVEAL -->
+  <div id="ghost-rev">
+    <div id="ghost-ico">👻</div>
+    <div id="tbc-wrap">
+      <div id="tbc-t">— ติดตามตอนต่อไป —</div>
+      <div id="tbc-s">คำมอด ภาค ๒ : ผีในห้อง 303</div>
+    </div>
+  </div>
+
+  <!-- ENDING -->
+  <div id="end-sc">
+    <div id="end-ico"></div>
+    <div id="end-ttl"></div>
+    <div id="end-msg"></div>
+    <button id="btn-restart" onclick="respawn()">↺ เล่นต่อจาก Checkpoint</button>
+  </div>
+
+  <!-- LOCK GAME -->
+  <div id="lock-ov">
+    <div class="lk-title">⚙ งัดแงะ</div>
+    <div class="lk-desc">กด "งัด!" เมื่อเข็มแดงอยู่ในโซนเขียว — 3 ครั้งสำเร็จ</div>
+    <div id="lk-bar"><div id="lk-zone" style="left:90px"></div><div id="lk-needle" style="left:0"></div></div>
+    <div id="lk-combo"><div class="cl" id="cl0"></div><div class="cl" id="cl1"></div><div class="cl" id="cl2"></div></div>
+    <button id="lk-btn" onclick="doLock()">งัด!</button>
+    <div id="lk-tries">เหลือโอกาส: <span id="tr-left">3</span> ครั้ง</div>
+  </div>
+
+  <!-- TEXTBOX -->
+  <div id="tb">
+    <div id="tb-top"><div id="tb-ico">⚙</div><div id="tb-name">ระบบ</div></div>
+    <div id="tb-txt"></div>
+    <div id="tb-choices"></div>
+    <div id="tb-arr" onclick="nextLine()">▼</div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div id="ctrls">
+    <div class="dpad">
+      <div></div><div class="dbtn" id="bu">▲</div><div></div>
+      <div class="dbtn" id="bl">◀</div>
+      <div class="dbtn" id="bd">▼</div>
+      <div class="dbtn" id="br">▶</div>
+    </div>
+    <div id="act-side">
+      <div id="btn-act">กด!</div>
+      <div id="act-lbl"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════
+   AUDIO ENGINE
+   ════════════════════════════════════════════════ */
+let AC;
+function initAC(){ try{ AC=new(window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+function tn(f,t='sine',d=.12,v=.14,delay=0){
+  if(!AC)return;
+  try{
+    const o=AC.createOscillator(),g=AC.createGain();
+    o.connect(g);g.connect(AC.destination);
+    o.type=t;o.frequency.value=f;
+    const s=AC.currentTime+delay;
+    g.gain.setValueAtTime(0,s);g.gain.linearRampToValueAtTime(v,s+.004);
+    g.gain.exponentialRampToValueAtTime(.001,s+d);
+    o.start(s);o.stop(s+d+.02);
+  }catch(e){}
+}
+function nz(d=.1,v=.07,delay=0,flo=100,fhi=400){
+  if(!AC)return;
+  try{
+    const buf=AC.createBuffer(1,AC.sampleRate*d,AC.sampleRate);
+    const dat=buf.getChannelData(0);for(let i=0;i<dat.length;i++)dat[i]=(Math.random()*2-1);
+    const src=AC.createBufferSource(),g=AC.createGain(),flt=AC.createBiquadFilter();
+    flt.type='bandpass';flt.frequency.value=(flo+fhi)/2;flt.Q.value=.5;
+    src.buffer=buf;src.connect(flt);flt.connect(g);g.connect(AC.destination);
+    const s=AC.currentTime+delay;
+    g.gain.setValueAtTime(v,s);g.gain.exponentialRampToValueAtTime(.001,s+d);
+    src.start(s);src.stop(s+d+.01);
+  }catch(e){}
+}
+// surface steps
+let _lastStep=0;
+function sfxStep(surface){
+  const now=Date.now();if(now-_lastStep<260)return;_lastStep=now;
+  switch(surface){
+    case 'dirt':  nz(.065,.055,0,60,170);tn(85,'sine',.04,.03);break;
+    case 'stone': nz(.038,.05,0,200,550);tn(175,'square',.025,.05);break;
+    case 'grass': nz(.055,.045,0,90,280);tn(68,'sine',.035,.025);break;
+    case 'cement':nz(.038,.04,0,280,650);tn(145,'square',.025,.04);tn(78,'sine',.035,.025,.01);break;
+    case 'wood':  nz(.05,.055,0,140,380);tn(115,'triangle',.055,.06);break;
+  }
+}
+function sfxDoorIron(){
+  if(!AC)return;
+  try{const o=AC.createOscillator(),g=AC.createGain();o.connect(g);g.connect(AC.destination);
+    o.type='sawtooth';const t=AC.currentTime;
+    o.frequency.setValueAtTime(75,t);o.frequency.linearRampToValueAtTime(210,t+.38);
+    o.frequency.linearRampToValueAtTime(55,t+.85);
+    g.gain.setValueAtTime(.11,t);g.gain.exponentialRampToValueAtTime(.001,t+.95);
+    o.start(t);o.stop(t+1);}catch(e){}
+  nz(.9,.045,0,90,380);
+}
+function sfxDoorWood(){tn(195,'triangle',.14,.09);tn(118,'sawtooth',.22,.07,.05);nz(.28,.045,0,95,280);}
+function sfxDoorSlam(){nz(.18,.14,0,38,190);tn(58,'sawtooth',.28,.18);}
+function sfxHammer(){nz(.11,.18,0,38,140);tn(58,'sawtooth',.16,.22);tn(195,'square',.07,.09,.02);}
+function sfxHit(){nz(.07,.13,0,55,280);tn(78,'sawtooth',.11,.18);tn(155,'sine',.045,.07,.035);}
+function sfxBossHit(){nz(.14,.18,0,38,190);tn(52,'sawtooth',.22,.28);tn(105,'square',.09,.11,.05);}
+function sfxGhost(){
+  if(!AC)return;
+  try{const o=AC.createOscillator(),g=AC.createGain();o.connect(g);g.connect(AC.destination);
+    o.type='sine';const t=AC.currentTime;
+    o.frequency.setValueAtTime(290,t);o.frequency.linearRampToValueAtTime(175,t+.28);
+    o.frequency.linearRampToValueAtTime(380,t+.65);o.frequency.exponentialRampToValueAtTime(95,t+1.3);
+    g.gain.setValueAtTime(.11,t);g.gain.exponentialRampToValueAtTime(.001,t+1.4);
+    o.start(t);o.stop(t+1.5);}catch(e){}
+  nz(1.4,.04,.18,55,185);
+}
+function sfxScare(){nz(.28,.12,0,38,170);tn(52,'sawtooth',.38,.2);tn(78,'sawtooth',.28,.13,.1);sfxGhost();}
+function sfxChicken(){[780,580,880,480,980].forEach((f,i)=>tn(f,'square',.055,.09,i*.055));}
+function sfxClick(){tn(440,'square',.035,.07);}
+function sfxPick(){tn(650,'sine',.09,.13);tn(870,'sine',.07,.1,.055);}
+function sfxWin(){[440,523,659,784].forEach((f,i)=>tn(f,'sine',.17,.17,i*.105));}
+function sfxType(){tn(275+Math.random()*115,'sine',.016,.028);}
+function sfxYant(){tn(590,'sine',.065,.11);tn(790,'sine',.065,.09,.075);tn(1040,'sine',.045,.065,.17);}
+function sfxLockTick(){tn(390,'square',.018,.035);}
+function sfxLockOK(){tn(430,'sine',.09,.18);tn(650,'sine',.09,.14,.07);tn(870,'sine',.06,.1,.15);}
+function sfxLockFail(){tn(145,'sawtooth',.14,.18);tn(98,'sawtooth',.11,.14,.07);}
+function sfxSneak(){nz(.04,.02,0,80,200);}  // soft grass rustle when sneaking
+
+/* ════════════════════════════════════════════════
+   SAVE / CHECKPOINT SYSTEM
+   ════════════════════════════════════════════════ */
+const SAVE_KEY='kammord_save';
+function saveCheckpoint(chId, hp=G.hp){
+  const data={chId,hp:Math.max(30,hp),yants:G.yants,hammer:G.hammer};
+  try{localStorage.setItem(SAVE_KEY,JSON.stringify(data));}catch(e){}
+  flashCkpt();
+}
+function loadCheckpoint(){
+  try{ return JSON.parse(localStorage.getItem(SAVE_KEY)||'null'); }catch(e){ return null; }
+}
+function flashCkpt(){
+  const b=document.getElementById('ckpt-badge');
+  b.style.opacity='1';setTimeout(()=>b.style.opacity='0',2200);
+}
+function respawn(){
+  // Hard reset everything
+  if(_fieldIv){clearInterval(_fieldIv);_fieldIv=null;}
+  if(_lockIv){clearInterval(_lockIv);_lockIv=null;}
+  if(_typeIv){clearInterval(_typeIv);_typeIv=null;}
+  // Reset dialog state fully
+  TBTyping=false; TBDone=null; TBQ=[]; TBI=0; TBLocked=false;
+  stopTalk();
+
+  $('end-sc').style.display='none';
+  $('tb').style.display='none';
+  $('tb-choices').style.display='none';
+  $('tb-choices').innerHTML='';
+  $('lock-ov').style.display='none';
+  $('stealthbar').style.display='none';
+  $('alert-badge').style.display='none';
+
+  const sv=loadCheckpoint();
+  if(sv){
+    G.hp=sv.hp; G.yants=sv.yants||0; G.hammer=sv.hammer||false;
+  } else {
+    G.hp=100; G.yants=0; G.hammer=false;
+  }
+  updateHUD();
+
+  const chId=sv?.chId||'sc01';
+  gotoChapter(chId).then(()=>{
+    if(chId==='sc08'){
+      // Restart field from checkpoint
+      dialog([
+        L('ระบบ','...คำมอดกลับมามีสติอีกครั้ง พรายยังอยู่ในทุ่ง'),
+        L('คำมอด','ต้องเก็บยันต์ให้ครบแล้วออกไป!'),
+        L('ระบบ','💡 กด [ซ่อนตัว] เพื่อนั่งซ่อนในพุ่ม พรายจะมองหาแล้วเดินหนี'),
+      ],()=>startFieldGame());
+    } else if(chId==='sc09'){
+      goToBoss();
+    } else if(chId==='sc03'){
+      // back to prison start
+      $('prison-bars').classList.remove('open');
+      $('hammer-obj').style.display='none';
+      G.hammer=false; updateHUD();
+      const km=$('km-cell'); if(km) km.style.left='130px';
+      dialog([L('คำมอด','...ตื่นขึ้นมาอีกครั้ง ในห้องขังเดิม ต้องงัดออกไปให้ได้'),],()=>startLock());
+    } else {
+      // For village/market chapters, re-trigger the chapter intro
+      if(chId==='sc04') ch4();
+      else if(chId==='sc05') ch5();
+      else if(chId==='sc07') ch6();
+      else ch1();
+    }
+  });
+}
+
+/* ════════════════════════════════════════════════
+   GAME STATE
+   ════════════════════════════════════════════════ */
+const G={
+  hp:100, yants:0, hammer:false,
+  moveState:'NONE',
+  scr:{v4:0,v5:0,apt:0},
+  field:{x:80,praaiX:600,stam:100,col:[false,false,false],over:false,won:false},
+  stealth:{active:false,meter:0,alerted:false},
+  boss:{hp:100},
+  lockLit:0, lockFail:0,
+  villageEnd:false, marketEnd:false, ritualDone:false,
+  npcDone:{},
+  currentChapter:'',
+};
+const KEYS={u:0,d:0,l:0,r:0};
+
+/* ════════════════════════════════════════════════
+   UTILS
+   ════════════════════════════════════════════════ */
+const $=id=>document.getElementById(id);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function fo(d=500){$('fade').style.transition=`opacity ${d/1000}s`;$('fade').style.opacity='1';await sleep(d+40);}
+async function fi(d=450){$('fade').style.transition=`opacity ${d/1000}s`;$('fade').style.opacity='0';await sleep(d+40);}
+function showSc(id){document.querySelectorAll('.sc').forEach(s=>s.classList.remove('on'));$(id)?.classList.add('on');}
+function setChTag(t){$('ch-tag').textContent=t;}
+function updateHUD(){
+  const hp=Math.max(0,G.hp);
+  $('hp-fill').style.width=hp+'%';
+  $('hp-fill').style.background=hp>50?'linear-gradient(90deg,#800,#f00)':hp>25?'linear-gradient(90deg,#840,#f80)':'linear-gradient(90deg,#400,#f00)';
+  $('hud-items').textContent=`🔨${G.hammer?1:0} 📜${G.yants}`;
+}
+function notify(msg){const n=$('notif');n.textContent=msg;n.classList.add('show');setTimeout(()=>n.classList.remove('show'),2400);}
+function particle(x,y,em){
+  for(let i=0;i<4;i++){
+    const p=document.createElement('div');p.className='ptcl';p.textContent=em;
+    p.style.left=x+'px';p.style.top=y+'px';
+    p.style.setProperty('--dx',(Math.random()*64-32)+'px');
+    p.style.setProperty('--dy',(-(Math.random()*55+18))+'px');
+    p.style.animationDelay=(Math.random()*.18)+'s';
+    $('G').appendChild(p);setTimeout(()=>p.remove(),1100);
+  }
+}
+function flashScreen(){const f=$('flash');f.style.opacity='.45';setTimeout(()=>f.style.opacity='0',120);}
+function shakeG(){$('G').style.animation='shake .28s ease';setTimeout(()=>$('G').style.animation='',290);}
+function showDmg(el,v,c='#f00'){
+  const r=el.getBoundingClientRect(),gr=$('G').getBoundingClientRect();
+  const d=document.createElement('div');d.className='dmg';d.textContent='-'+v;d.style.color=c;
+  d.style.left=(r.left-gr.left+8)+'px';d.style.top=(r.top-gr.top+8)+'px';
+  $('G').appendChild(d);setTimeout(()=>d.remove(),850);
+}
+
+/* ════════════════════════════════════════════════
+   TEXTBOX ENGINE  (fixed: choices as 3rd param)
+   ════════════════════════════════════════════════ */
+let TBQ=[],TBI=0,TBTyping=false,TBDone=null,TBLocked=false;
+const FACES={'คำมอด':'😤','ระบบ':'⚙','ลุงแสง':'👴','ป้าบัวลอย':'👵','เด็กชาย':'👦',
+  'แม่ค้า':'👩','วิญญาณผู้เฒ่า':'👻','พรายบุญมี':'👁','หมอผีคลั่ง':'💀',
+  'ภรรยา':'👩‍🦱','ลูกสาว':'👧','เพื่อนบ้าน':'🧑','ผีในห้อง 303':'👻',
+  'เพื่อนบ้าน2':'🧓','นายแพทย์ผี':'🧙'};
+
+// L(name, msg, choices=[]) — choices is plain array, NOT {choices:[...]}
+function L(name,msg,choices=null){return{name,msg,choices};}
+
+function dialog(lines,onDone){
+  if(TBLocked)return;
+  TBQ=lines;TBI=0;TBDone=onDone||null;
+  $('tb').style.display='flex';
+  // hide controls while talking
+  $('ctrls').style.display='none';
+  renderLine();
+}
+
+function renderLine(){
+  if(TBI>=TBQ.length){
+    $('tb').style.display='none';
+    $('tb-choices').style.display='none';
+    $('tb-choices').innerHTML='';
+    // Run callback FIRST so it can set G.moveState, THEN restore controls
+    if(TBDone){const f=TBDone;TBDone=null;f();}
+    setTimeout(()=>{
+      if(['HALL3','V4','V5','V6','FIELD','APT'].includes(G.moveState)){
+        $('ctrls').style.display='flex';
+      }
+    },40);
+    return;
+  }
+  const line=TBQ[TBI];
+  $('tb-ico').textContent=FACES[line.name]||'❔';
+  $('tb-name').textContent=line.name;
+  $('tb-txt').textContent='';
+  $('tb-choices').style.display='none';
+  $('tb-choices').innerHTML='';
+  $('tb-arr').style.display='block';
+  if(line.name==='คำมอด') startTalk(); else stopTalk();
+  typeMsg(line.msg,()=>{
+    stopTalk();
+    if(line.choices) showChoices(line.choices);
+  });
+}
+
+let _typeIv=null;
+function typeMsg(txt,cb){
+  TBTyping=true;
+  if(_typeIv)clearInterval(_typeIv);
+  let i=0;const el=$('tb-txt');el.textContent='';
+  _typeIv=setInterval(()=>{
+    if(i>=txt.length){clearInterval(_typeIv);TBTyping=false;if(cb)cb();return;}
+    el.textContent+=txt[i++];if(i%3===0)sfxType();
+  },28);
+}
+
+function showChoices(choices){
+  $('tb-choices').style.display='flex';
+  $('tb-arr').style.display='none';
+  choices.forEach(c=>{
+    const b=document.createElement('button');b.className='copt';b.textContent=c.text;
+    b.onclick=()=>{
+      sfxClick();
+      $('tb-choices').style.display='none';$('tb-choices').innerHTML='';
+      $('tb-arr').style.display='block';
+      if(c.next){TBQ=c.next.concat(TBQ.slice(TBI+1));TBI=0;renderLine();}
+      else{TBI++;renderLine();}
+    };
+    $('tb-choices').appendChild(b);
+  });
+}
+
+function nextLine(){
+  sfxClick();
+  if(TBTyping){
+    // Skip current typing, show full text
+    if(_typeIv)clearInterval(_typeIv);
+    TBTyping=false;
+    const line=TBQ[TBI];
+    $('tb-txt').textContent=line?.msg||'';
+    stopTalk();
+    if(line?.choices) showChoices(line.choices);
+    return;
+  }
+  // Not typing → advance to next line
+  TBI++;
+  renderLine();
+}
+
+function startTalk(){document.querySelectorAll('.spr').forEach(s=>s.classList.add('talk'));const m=$('km-mouth');if(m)m.style.animation='mtkl .11s infinite alternate';}
+function stopTalk(){document.querySelectorAll('.spr').forEach(s=>s.classList.remove('talk'));const m=$('km-mouth');if(m)m.style.animation='';}
+
+/* ════════════════════════════════════════════════
+   STARS
+   ════════════════════════════════════════════════ */
+function buildStars(id,n=55){
+  const c=$(id);if(!c)return;
+  for(let i=0;i<n;i++){
+    const d=document.createElement('div');
+    d.style.cssText=`position:absolute;width:${Math.random()<.2?3:2}px;height:${Math.random()<.2?3:2}px;background:#fff;border-radius:50%;left:${Math.random()*100}%;top:${Math.random()*55}%;animation:blink ${1.5+Math.random()*2}s infinite;animation-delay:${Math.random()*3}s;`;
+    c.appendChild(d);
+  }
+}
+
+/* ════════════════════════════════════════════════
+   VILLAGE / MARKET BUILDERS
+   ════════════════════════════════════════════════ */
+function buildWorld(scId,width,npcs,onExit){
+  const sc=$(scId); sc.innerHTML='';
+  const floor=document.createElement('div');floor.className='world-floor';sc.appendChild(floor);
+  const scroll=document.createElement('div');scroll.className='w-scroll';scroll.style.width=width+'px';scroll.style.height='100%';
+  scroll.id=scId+'-scroll';sc.appendChild(scroll);
+
+  // trees / houses decor
+  const treeXs=[40,110,280,420,580,750,900,1060,1220,1400,1560,1700];
+  treeXs.forEach(x=>{
+    const t=document.createElement('div');t.className='w-tree';t.style.left=x+'px';
+    t.textContent=Math.random()>.5?'🌾':'🌿';scroll.appendChild(t);
+  });
+  const houseXs=[200,600,1000,1400];
+  houseXs.forEach(x=>{
+    const h=document.createElement('div');h.className='w-house';h.style.left=x+'px';
+    h.innerHTML='<div class="h-roof"></div><div class="h-body"><div class="h-win"></div></div>';
+    scroll.appendChild(h);
+  });
+
+  // NPCs
+  npcs.forEach(npc=>{
+    const el=document.createElement('div');el.className='npc-spr';el.style.cssText=`position:absolute;bottom:50px;left:${npc.x}px;text-align:center;z-index:50;`;
+    const bub=document.createElement('div');bub.className='npc-bubble';bub.textContent='!';el.appendChild(bub);
+    const ico=document.createElement('div');ico.style.fontSize='26px';ico.textContent=npc.ico;el.appendChild(ico);
+    el.onclick=()=>{
+      if(G.npcDone[npc.id]) return;
+      sfxClick();
+      const prevState=G.moveState;  // remember current move state
+      G.moveState='NONE';
+      dialog(npc.lines,()=>{
+        G.npcDone[npc.id]=true;
+        bub.textContent='✓';bub.style.color='#0f0';bub.style.display='block';
+        // Restore to whatever state we were in
+        G.moveState=prevState;
+        $('ctrls').style.display='flex';
+      });
+    };
+    // bubble proximity
+    const bubIv=setInterval(()=>{
+      if(!$(scId+'-scroll'))return;
+      const sx=parseFloat($(scId+'-scroll').style.transform?.match(/-?\d+/)?.[0]||'0');
+      const npcSx=npc.x+sx;
+      bub.style.display=(Math.abs(npcSx-130)<90&&!G.npcDone[npc.id])?'block':'none';
+    },80);
+    scroll.appendChild(el);
+  });
+
+  // KM sprite
+  const km=document.createElement('div');km.id=scId+'-km';
+  km.style.cssText='position:absolute;bottom:50px;left:120px;z-index:100;';
+  km.innerHTML=`<div class="spr" id="${scId}-spr"><div class="spr-hat"></div><div class="spr-head"><div class="spr-el L"></div><div class="spr-el R"></div><div class="spr-mouth"></div></div><div class="spr-body"></div><div class="spr-leg L" id="${scId}-ll"></div><div class="spr-leg R" id="${scId}-lr"></div></div>`;
+  sc.appendChild(km);
+}
+
+/* ════════════════════════════════════════════════
+   RICE FIELD
+   ════════════════════════════════════════════════ */
+const FIELD_W=2100;
+const YPOS=[190,650,1150];
+function buildField(){
+  const layer=$('rice-layer');layer.innerHTML='';layer.style.width=FIELD_W+'px';
+  for(let i=0;i<140;i++){
+    const s=document.createElement('div');s.className='r-stalk';
+    const h=65+Math.random()*90;s.style.height=h+'px';s.style.left=(i*15)+'px';s.style.opacity=.4+Math.random()*.55;
+    layer.appendChild(s);
+  }
+  // yant pickups
+  YPOS.forEach((px,i)=>{
+    const y=document.createElement('div');y.className='yant-pick';y.id='yp'+i;y.style.left=px+'px';y.textContent='📜';
+    $('field-wrap').appendChild(y);
+  });
+  // bushes (hiding spots)
+  [280,520,820,1100,1400,1680].forEach(px=>{
+    const b=document.createElement('div');b.className='bush-hide';b.style.left=px+'px';b.textContent='🌿';
+    $('field-wrap').appendChild(b);
+  });
+  // rocks
+  [340,490,730,890,1040,1290,1480,1660].forEach(px=>{
+    const r=document.createElement('div');r.className='obs';r.dataset.ox=px;r.style.left=px+'px';
+    $('field-wrap').appendChild(r);
+  });
+}
+
+/* ════════════════════════════════════════════════
+   APARTMENT BUILDER
+   ════════════════════════════════════════════════ */
+function buildApt(){
+  const hall=$('apt-hall');hall.innerHTML='';
+  const scroll=document.createElement('div');scroll.id='apt-scroll';
+  scroll.style.cssText='position:absolute;bottom:0;left:0;width:1500px;height:100%;';
+  const wall=document.createElement('div');wall.className='apt-wall-line';scroll.appendChild(wall);
+  const flr=document.createElement('div');flr.className='apt-floor';scroll.appendChild(flr);
+  // lamps
+  for(let i=0;i<6;i++){const l=document.createElement('div');l.style.cssText=`position:absolute;top:0;left:${90+i*220}px;width:55px;height:4px;background:rgba(200,180,100,.12);box-shadow:0 0 36px rgba(200,180,100,.07);`;scroll.appendChild(l);}
+  // doors
+  [{x:60,n:'301'},{x:220,n:'302'},{x:540,n:'304'},{x:700,n:'305'},{x:860,n:'306'}].forEach(d=>{
+    const el=document.createElement('div');el.className='apt-door';el.style.left=d.x+'px';
+    el.innerHTML=`<div class="apt-door-n">${d.n}</div><div class="apt-door-k"></div>`;scroll.appendChild(el);
+  });
+  // km's door 303
+  const d303=document.createElement('div');d303.id='door303';d303.style.left='390px';
+  d303.innerHTML='<div id="door303-n">303</div><div id="door303-k"></div>';
+  scroll.appendChild(d303);
+  // neighbor NPC
+  const nbr=document.createElement('div');nbr.style.cssText='position:absolute;bottom:42px;left:620px;cursor:pointer;z-index:80;text-align:center;';
+  nbr.innerHTML='<div style="font-size:9px;color:#400;animation:blink 1.2s infinite;">คุย</div><div style="font-size:24px;">🧑</div>';
+  nbr.onclick=()=>{
+    if(G.npcDone['nbr_apt'])return;
+    sfxClick();
+    const prevState=G.moveState;
+    G.moveState='NONE';
+    dialog([
+      L('เพื่อนบ้าน','*เปิดประตูงัวเงีย* โอ้... คำมอด! กลับมาแล้วเหรอ? ทุกคนคิดว่านายตายแล้วนะ'),
+      L('คำมอด','ยังไม่ตายครับ... แค่ไปเจอเรื่องแปลกๆ ในชนบท'),
+      L('เพื่อนบ้าน','เมื่อกี้นี้ก็ได้ยินเสียงแปลกจากห้องนายนะ เหมือนมีคนเดินอยู่ แต่นายไม่น่าจะกลับก่อนนี้ได้'),
+      L('คำมอด','...อะไรนะ? ข้ายังไม่ถึงบ้านเลยตะกี้'),
+      L('เพื่อนบ้าน','*ถอยกลับ* แล้วเสียงนั้นมาจากไหน? *ปิดประตูปั้ง*'),
+    ],()=>{
+      G.npcDone['nbr_apt']=true;
+      G.moveState=prevState;
+      $('ctrls').style.display='flex';
+    });
+  };
+  scroll.appendChild(nbr);
+  hall.appendChild(scroll);
+
+  // KM sprite อยู่นอก scroll → ตำแหน่งคงที่บนหน้าจอ
+  const km=document.createElement('div');km.id='apt-km';
+  km.style.cssText='position:absolute;bottom:42px;left:120px;z-index:100;';
+  km.innerHTML='<div class="spr" id="apt-spr"><div class="spr-hat"></div><div class="spr-head"><div class="spr-el L"></div><div class="spr-el R"></div><div class="spr-mouth"></div></div><div class="spr-body"></div><div class="spr-leg L" id="apt-ll"></div><div class="spr-leg R" id="apt-lr"></div></div>';
+  hall.appendChild(km);
+}
+
+/* ════════════════════════════════════════════════
+   LOCK MINI-GAME
+   ════════════════════════════════════════════════ */
+let _lockNeedle=0,_lockDir=1,_lockSpeed=2.4,_lockIv=null;
+function startLock(){
+  $('lock-ov').style.display='flex';
+  G.lockLit=0;G.lockFail=0;
+  ['cl0','cl1','cl2'].forEach(id=>$(id).classList.remove('on'));
+  _lockSpeed=2.4;_lockNeedle=0;_lockDir=1;
+  $('lk-zone').style.left=(55+Math.random()*140)+'px';
+  $('tr-left').textContent=3;
+  if(_lockIv)clearInterval(_lockIv);
+  _lockIv=setInterval(()=>{
+    _lockNeedle+=_lockDir*_lockSpeed;
+    if(_lockNeedle>243||_lockNeedle<0){_lockDir*=-1;_lockNeedle=Math.max(0,Math.min(243,_lockNeedle));}
+    $('lk-needle').style.left=_lockNeedle+'px';sfxLockTick();
+  },11);
+}
+function doLock(){
+  sfxClick();
+  const zl=parseFloat($('lk-zone').style.left);const zr=zl+52;
+  if(_lockNeedle>=zl&&_lockNeedle<=zr){
+    sfxLockOK();$('cl'+G.lockLit).classList.add('on');particle(175,195,'✨');G.lockLit++;
+    if(G.lockLit>=3){clearInterval(_lockIv);onLockWin();}
+    else{_lockSpeed+=.55;notify(`🔓 งัดสำเร็จ ${G.lockLit}/3`);}
+  }else{
+    sfxLockFail();shakeG();G.hp=Math.max(0,G.hp-12);updateHUD();showDmg($('lk-btn'),12);
+    G.lockFail++;$('tr-left').textContent=Math.max(0,3-G.lockFail);
+    if(G.lockFail>=3){G.lockFail=0;$('tr-left').textContent=3;$('lk-zone').style.left=(55+Math.random()*140)+'px';notify('งัดพลาดบ่อย! โซนรีเซ็ต');}
+  }
+}
+function onLockWin(){
+  clearInterval(_lockIv);$('lock-ov').style.display='none';
+  $('prison-bars').classList.add('open');sfxDoorIron();sfxWin();particle(175,195,'🔓');
+  setTimeout(()=>{
+    dialog([
+      L('คำมอด','โย่!! ออกได้แล้ว! แต่ต้องหาทางออกจากบ้านนี้'),
+      L('ระบบ','ค้อนสนิมวางอยู่ในห้องเก็บของ เก็บไว้ทุบไม้สะกดทางออก'),
+    ],()=>{$('hammer-obj').style.display='block';});
+  },1000);
+}
+function pickHammer(){
+  sfxPick();G.hammer=true;updateHUD();$('hammer-obj').style.display='none';
+  particle(135,145,'🔨');notify('🔨 ได้ค้อนสนิมแล้ว!');
+  dialog([
+    L('คำมอด','ค้อนสนิม! นี่แหละอาวุธคู่ใจชาวนา ใช้ทุบไม้สะกดอาคมที่ปิดทางออกได้'),
+    L('ระบบ','เดินไปทางขวาสุด แล้วกด [ทุบ!] ที่ท่อระบายอากาศ'),
+  ],()=>{$('ctrls').style.display='flex';$('btn-act').style.display='none';G.moveState='HALL3';});
+}
+
+/* ════════════════════════════════════════════════
+   FIELD GAME  (stealth + fight)
+   ════════════════════════════════════════════════ */
+let _fieldIv=null;
+// Praai AI states: CHASE | SEARCH | WANDER
+let _praaiState='CHASE';
+let _praaiSearchTimer=0;
+let _praaiWanderDir=1;
+let _praaiWanderTimer=0;
+let _lastBushX=0; // nearest bush to player
+
+// Bush positions (same as buildField)
+const BUSH_POS=[280,520,820,1100,1400,1680];
+
+function nearestBush(px){
+  let best=9999,bx=0;
+  BUSH_POS.forEach(b=>{const d=Math.abs(b-px);if(d<best){best=d;bx=b;}});
+  return {x:bx,dist:best};
+}
+
+function startFieldGame(){
+  // Clean up old field elements before rebuilding
+  ['sc08-km','sc08-spr','sc08-ll','sc08-lr'].forEach(id=>{const e=$(id);if(e)e.remove();});
+  document.querySelectorAll('.yant-pick,.bush-hide,.obs').forEach(e=>e.remove());
+
+  buildField();
+  G.field={x:80,praaiX:650,stam:100,col:[false,false,false],over:false,won:false};
+  G.stealth={active:false,meter:100,alerted:false};
+  _praaiState='CHASE';_praaiSearchTimer=0;_praaiWanderDir=1;_praaiWanderTimer=0;
+  G.yants=0; updateHUD();
+  $('stam-fill').style.width='100%';
+  $('field-yants').textContent='📜 0/3';
+  $('stealthbar').style.display='block';
+  $('stealth-fill').style.width='100%';
+  $('stealth-fill').style.background='linear-gradient(90deg,#080f,#0ff)';
+  $('alert-badge').style.display='none';
+  $('ctrls').style.display='flex';
+  $('btn-act').style.display='flex';
+  $('btn-act').textContent='ซ่อนตัว';
+  $('act-lbl').textContent='กดเพื่อซ่อน/ลุกขึ้น';
+  G.moveState='FIELD';
+  if(_fieldIv){clearInterval(_fieldIv);_fieldIv=null;}
+  _fieldIv=setInterval(fieldTick,28);
+}
+
+function fieldTick(){
+  const f=G.field,st=G.stealth;
+  if(f.over||f.won)return;
+
+  // ── MOVEMENT ──────────────────────────────────
+  // ซ่อนตัวยังเดินได้ แต่ช้ากว่า (sneak walk)
+  const spd=st.active?1.6:4.0;
+  if(KEYS.r&&f.x<FIELD_W-30){f.x+=spd;if(st.active)sfxSneak();else sfxStep('grass');}
+  if(KEYS.l&&f.x>20){f.x-=spd;if(st.active)sfxSneak();else sfxStep('grass');}
+
+  // ── CAMERA ────────────────────────────────────
+  const cam=Math.max(0,Math.min(f.x-100,FIELD_W-360));
+  $('rice-layer').style.transform=`translateX(${-cam}px)`;
+  document.querySelectorAll('.obs').forEach(r=>{const ox=parseFloat(r.dataset.ox||0);r.style.left=(ox-cam)+'px';});
+  document.querySelectorAll('.bush-hide').forEach(r=>{
+    if(!r.dataset.ox)r.dataset.ox=r.style.left;
+    r.style.left=(parseFloat(r.dataset.ox)-cam)+'px';
+  });
+
+  // ── KM SPRITE ─────────────────────────────────
+  let km=$('sc08-km');
+  if(!km){
+    km=document.createElement('div');km.id='sc08-km';km.style.cssText='position:absolute;bottom:46px;z-index:20;';
+    km.innerHTML='<div class="spr" id="sc08-spr"><div class="spr-hat"></div><div class="spr-head"><div class="spr-el L"></div><div class="spr-el R"></div><div class="spr-mouth"></div></div><div class="spr-body"></div><div class="spr-leg L" id="sc08-ll"></div><div class="spr-leg R" id="sc08-lr"></div></div>';
+    $('field-wrap').appendChild(km);
+  }
+  km.style.left=(f.x-cam)+'px';
+  const spr=$('sc08-spr');
+  const isMoving=KEYS.r||KEYS.l;
+  if(spr){
+    setWalk('sc08-ll','sc08-lr',isMoving);
+    spr.classList.toggle('crouch',st.active);
+  }
+
+  // ── STEALTH METER ─────────────────────────────
+  // meter = visibility (100=ถูกมองเห็นได้, 0=ซ่อนสมบูรณ์)
+  // ซ่อนอยู่ meter ลดเร็ว, ลุกขึ้น meter เพิ่ม
+  if(st.active){
+    st.meter=Math.max(0,st.meter-1.2);
+    // อยู่ใกล้พุ่มซ่อนตัวเพิ่มประสิทธิภาพ
+    const nb=nearestBush(f.x);
+    if(nb.dist<45) st.meter=Math.max(0,st.meter-0.8);
+  } else {
+    st.meter=Math.min(100,st.meter+0.9);
+  }
+  $('stealth-fill').style.width=st.meter+'%';
+  const vis=st.meter;
+  $('stealth-fill').style.background=vis<30?'linear-gradient(90deg,#00a,#00f)'
+    :vis<60?'linear-gradient(90deg,#040,#080)'
+    :'linear-gradient(90deg,#f80,#f00)';
+
+  // ── PRAAI AI (3 states) ────────────────────────
+  const dist=Math.abs(f.praaiX-f.x);
+
+  if(_praaiState==='CHASE'){
+    // ตามหา player
+    const chaseSpd=2.2+G.yants*0.6;
+    if(f.praaiX>f.x) f.praaiX-=chaseSpd; else f.praaiX+=chaseSpd;
+    $('alert-badge').style.display='block';
+    $('alert-badge').textContent='⚠ พรายไล่!';
+    $('alert-badge').style.color='#f44';
+    // ถ้า player ซ่อนและ meter ต่ำพอ → เปลี่ยนเป็น SEARCH
+    if(st.active&&vis<35){
+      _praaiState='SEARCH';
+      _praaiSearchTimer=120; // ~3.4 วินาที ที่ 28ms/frame
+      $('alert-badge').textContent='👁 กำลังหา...';
+      $('alert-badge').style.color='#f80';
+    }
+  }
+  else if(_praaiState==='SEARCH'){
+    // เดินหาอยู่กับที่ / เดินกลับไปกลับมา
+    _praaiSearchTimer--;
+    _praaiWanderTimer++;
+    if(_praaiWanderTimer%30===0) _praaiWanderDir*=-1; // เปลี่ยนทิศทุก 30 frame
+    f.praaiX+=_praaiWanderDir*0.8;
+    f.praaiX=Math.max(0,Math.min(FIELD_W,f.praaiX));
+    $('alert-badge').textContent='👁 '+'กำลังหา'.padEnd(Math.floor(_praaiSearchTimer/20)+1,'.');
+    $('alert-badge').style.color='#f80';
+    // ถ้า player ลุกขึ้น หรือเวลาหาหมด
+    if(!st.active||vis>60){
+      _praaiState='CHASE';
+    } else if(_praaiSearchTimer<=0){
+      _praaiState='WANDER';
+      _praaiWanderTimer=0;
+      $('alert-badge').textContent='✓ หาไม่เจอ';
+      $('alert-badge').style.color='#8f8';
+    }
+  }
+  else if(_praaiState==='WANDER'){
+    // ไม่เจอแล้ว เดินออกไปทิศตรงข้าม player
+    _praaiWanderTimer++;
+    const awayDir=f.praaiX>f.x?1:-1; // เดินออกจาก player
+    f.praaiX+=awayDir*1.5;
+    f.praaiX=Math.max(0,Math.min(FIELD_W,f.praaiX));
+    // ถ้า player ลุกขึ้นและผีห่างออกไปพอ → CHASE อีกครั้ง
+    if(!st.active&&dist<300){
+      _praaiState='CHASE';
+    }
+    // ซ่อนนานพอ → badge หาย
+    if(_praaiWanderTimer>100){
+      $('alert-badge').style.display='none';
+    }
+    // ถ้าผีออกไปไกลมาก → reset position ห่างๆ
+    if(dist>800){
+      f.praaiX=f.x+(f.x<FIELD_W/2?-600:600);
+      _praaiState='CHASE';
+    }
+  }
+
+  // อัปเดต praai sprite position
+  const praaiScreen=f.praaiX-cam;
+  const praaiSpr=$('praai-spr');
+  if(praaiSpr){
+    praaiSpr.style.left=praaiScreen+'px';
+    // กะพริบตาเมื่อซ่อน+search
+    if(_praaiState==='SEARCH'){praaiSpr.style.opacity=(.5+Math.sin(Date.now()*.01)*.4).toString();}
+    else praaiSpr.style.opacity='1';
+  }
+
+  // ── STAMINA ───────────────────────────────────
+  f.stam=st.active?Math.min(100,f.stam+0.06):Math.max(0,f.stam-0.10);
+  $('stam-fill').style.width=f.stam+'%';
+  $('stam-fill').style.background=f.stam>40?'linear-gradient(90deg,#080,#0f0)'
+    :f.stam>20?'linear-gradient(90deg,#880,#ff0)':'linear-gradient(90deg,#800,#f00)';
+
+  // ── COLLECT YANTS ─────────────────────────────
+  YPOS.forEach((px,i)=>{
+    if(!f.col[i]&&Math.abs(f.x-px)<26){
+      f.col[i]=true;G.yants++;updateHUD();sfxYant();
+      const el=$('yp'+i);if(el)el.style.display='none';
+      particle(f.x-cam,80,'📜');
+      $('field-yants').textContent=`📜 ${G.yants}/3`;
+      notify(`📜 ได้ยันต์ ${G.yants}/3!`);
+      if(G.yants>=3){
+        $('btn-act').textContent='ออกจากทุ่ง!';
+        $('act-lbl').textContent='เก็บครบแล้ว!';
+      }
+    }
+  });
+
+  // ── ROCK HIT ──────────────────────────────────
+  document.querySelectorAll('.obs').forEach(r=>{
+    const rl=parseFloat(r.dataset.ox||0)-cam;
+    if(Math.abs((f.x-cam)-rl)<16){f.stam=Math.max(0,f.stam-3);shakeG();}
+  });
+
+  // ── BUSH HINT ─────────────────────────────────
+  // แสดงลูกศรชี้พุ่มใกล้สุด
+  const nb=nearestBush(f.x);
+  if(nb.dist<120&&!st.active){
+    $('act-lbl').textContent=`🌿 พุ่มซ่อนอยู่ ${Math.round(nb.x>f.x?nb.x-f.x:f.x-nb.x)}px ${nb.x>f.x?'→':'←'}`;
+  } else if(G.yants>=3){
+    $('act-lbl').textContent='เก็บครบแล้ว!';
+  } else if(st.active){
+    $('act-lbl').textContent='🌿 ซ่อนอยู่ — เดินได้ช้า';
+  } else {
+    $('act-lbl').textContent='กดเพื่อซ่อน/ลุกขึ้น';
+  }
+
+  // ── PRAAI CATCH ───────────────────────────────
+  if(_praaiState==='CHASE'&&dist<20){
+    G.hp=Math.max(0,G.hp-1.1);updateHUD();sfxHit();shakeG();
+    if(G.hp<=0&&!f.over){f.over=true;clearInterval(_fieldIv);_fieldIv=null;triggerDeath('field');}
+  }
+  // แม้ซ่อนอยู่ แต่ผีอยู่ติดกันมากๆ ยังโดนนิดหน่อย
+  if(_praaiState!=='WANDER'&&dist<14&&st.active){
+    G.hp=Math.max(0,G.hp-0.12);updateHUD();
+  }
+  if(f.stam<=0){
+    G.hp=Math.max(0,G.hp-0.35);updateHUD();
+    if(G.hp<=0&&!f.over){f.over=true;clearInterval(_fieldIv);_fieldIv=null;triggerDeath('field');}
+  }
+}
+
+/* ACTION in field */
+function fieldAction(){
+  const f=G.field,st=G.stealth;
+  if(G.yants>=3){
+    clearInterval(_fieldIv);_fieldIv=null;f.won=true;
+    $('ctrls').style.display='none';$('btn-act').style.display='none';
+    $('stealthbar').style.display='none';$('alert-badge').style.display='none';
+    dialog([L('คำมอด','ได้ยันต์ครบแล้ว! พลังเวทย์กลับมาแล้ว! ออกไปได้แล้ว!')],()=>goToBoss());
+    return;
+  }
+  // toggle stealth
+  st.active=!st.active;
+  if(st.active){
+    const nb=nearestBush(f.x);
+    if(nb.dist<60){
+      notify('🌿 ซ่อนอยู่ในพุ่ม — พรายมองไม่เห็น!');
+    } else {
+      notify(`🌿 ซ่อนตัว — เดินได้ช้า (พุ่มใกล้สุด ${Math.round(nb.dist)}px)`);
+    }
+    $('btn-act').textContent='ลุกขึ้น';
+    // ถ้ากำลัง Chase → เปลี่ยนเป็น Search ทันที
+    if(_praaiState==='CHASE') _praaiState='SEARCH',_praaiSearchTimer=100;
+  } else {
+    notify('⚡ ลุกขึ้นวิ่ง!');
+    $('btn-act').textContent='ซ่อนตัว';
+    _praaiState='CHASE';
+  }
+}
+
+/* ════════════════════════════════════════════════
+   BOSS FIGHT
+   ════════════════════════════════════════════════ */
+async function runBoss(path){
+  $('final-choice').style.display='none';
+  G.boss.hp=100;$('btn-act').style.display='none';$('ctrls').style.display='none';
+  const hits=path==='dark'?[28,32,40]:[15,15,18,22,20,10];
+  for(let i=0;i<hits.length;i++){
+    await sleep(650);
+    if(path==='good'&&i%2===1){G.hp=Math.max(0,G.hp-16);updateHUD();shakeG();sfxHit();}
+    G.boss.hp=Math.max(0,G.boss.hp-hits[i]);
+    $('boss-hp-f').style.width=G.boss.hp+'%';
+    sfxBossHit();flashScreen();shakeG();particle(170,95,path==='dark'?'🩸':'💥');
+    if(G.hp<=0){await triggerDeath('boss');return;}
+  }
+  await sleep(800);
+  if(path==='dark') await endDark();
+  else await endGood();
+}
+
+function choosePath(path){
+  sfxClick();
+  if(path==='dark'){
+    dialog([L('คำมอด','ถ้านั่นคือราคา... ข้าจะจ่าย! *ตาเปลี่ยนเป็นแดง*')],()=>runBoss('dark'));
+  } else {
+    dialog([L('คำมอด','ไม่เอาวิชาบาป! ค้อนสนิมก็พอ!!')],()=>runBoss('good'));
+  }
+}
+
+/* ════════════════════════════════════════════════
+   ENDINGS
+   ════════════════════════════════════════════════ */
+async function endGood(){
+  dialog([
+    L('คำมอด','*หายใจหอบ* มันพ่ายแพ้แล้ว... จบแล้ว'),
+    L('ภรรยา','พ่อ!! *วิ่งเข้ากอด* ไปอยู่ไหนมาเป็นอาทิตย์ แม่กังวลมากเลย'),
+    L('คำมอด','ขอโทษนะ... ไม่อยากให้กังวล ทุกอย่างเรียบร้อยแล้ว'),
+    L('ลูกสาว','พ่อ! หนูฝันว่าพ่อโดนผีกินทุกคืนเลย *ร้องไห้*'),
+    L('คำมอด','*หัวเราะเบาๆ* พ่อแข็งแกร่งเกินกว่าผีจะกิน ไปกลับบ้านกันเถอะ'),
+    L('ระบบ','ทุ่งนากลับมาสงบสุข ชาวบ้านกลับมาใช้ชีวิตปกติ คำมอดวางค้อน หยิบจอบ กลับสู่นาข้าวที่รัก'),
+    L('ระบบ','แต่เรื่องราวยังไม่จบ...'),
+  ],()=>goToApartment());
+}
+async function endDark(){
+  dialog([
+    L('คำมอด','*เสียงเปลี่ยน* ชนะแล้ว... ข้าชนะแล้ว'),
+    L('ภรรยา','พ่อ... *หน้ากลัว* ตาพ่อ มันเป็นยังไง?'),
+    L('คำมอด','*ยิ้ม แต่ตายังแดง* เป็นยังไง? ปกติดีนี่'),
+    L('ลูกสาว','*กระซิบ* แม่... พ่อไม่เหมือนเดิมแล้ว'),
+    L('ระบบ','คำมอดชนะ... แต่สิ่งบางอย่างในตัวเขาเปลี่ยนไปตลอดกาล'),
+    L('ระบบ','และเรื่องราวนี้ยังไม่จบ...'),
+  ],()=>goToApartment());
+}
+async function triggerDeath(from){
+  saveCheckpoint(G.currentChapter);
+  await fo(400);
+  $('end-sc').style.display='flex';
+  $('end-sc').style.background='radial-gradient(ellipse at 50% 30%,#1a0000,#000)';
+  $('end-ico').textContent='💀';$('end-ttl').textContent='YOU DIED';$('end-ttl').style.color='#f00';
+  let msg='';
+  if(from==='field') msg='พรายบุญมีไล่จนทัน...<br>วิญญาณถูกดูดไปเป็นทาสหมอผี<br><br><small style="color:#333">Checkpoint บันทึกแล้ว กดเล่นต่อ</small>';
+  else msg='คำมอดพ่ายแพ้...<br>ครอบครัวถูกจับตัวไว้<br><br><small style="color:#333">Checkpoint บันทึกแล้ว กดเล่นต่อ</small>';
+  $('end-msg').innerHTML=msg;
+  sfxScare();
+  await fi(400);
+}
+
+/* ════════════════════════════════════════════════
+   APARTMENT
+   ════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════
+   APARTMENT  (แก้บั๊ก KM ไม่เดิน + ห้อง 303 ไม่มีฉาก)
+   ════════════════════════════════════════════════ */
+async function goToApartment(){
+  G.moveState='NONE';
+  // รีเซ็ต scroll และ rebuild
+  G.scr.apt=0;
+  buildApt(); // rebuild เสมอเพื่อ reset position
+  await fo();showSc('sc10');setChTag('Chapter 9 · กลับบ้าน');saveCheckpoint('sc10');await fi();
+  dialog([
+    L('ระบบ','หลายวันต่อมา คำมอดกลับถึงอพาร์ทเม้นท์ของตัวเอง ย่านลาดกระบัง กรุงเทพฯ'),
+    L('คำมอด','*ถอนหายใจยาว* บ้านเราแล้ว... ไม่น่าเชื่อเลยว่ากลับมาได้'),
+    L('ระบบ','เดินไปทางขวา — ห้อง 303 รอคำมอดอยู่'),
+  ],()=>{
+    $('ctrls').style.display='flex';
+    $('btn-act').style.display='none';
+    G.moveState='APT';
+  });
+}
+/* ════════════════════════════════════════════════
+   ROOM 303 — ฉากเต็ม + คำมอดพูดประโยคเท่
+   ════════════════════════════════════════════════ */
+function enterRoom303(){
+  G.moveState='NONE';
+  $('ctrls').style.display='none';
+  $('btn-act').style.display='none';
+  sfxDoorWood();
+  dialog([
+    L('คำมอด','ล็อคได้อยู่... เปิดก่อนแล้วกัน *เสียงกุญแจ*'),
+    L('ระบบ','*เสียงกลอนดังคลิก* ประตูเปิด'),
+  ],()=>showRoom303());
+}
+
+async function showRoom303(){
+  // Build room interior scene overtop sc10
+  await fo(300);
+  // สร้างฉากห้อง 303 ชั่วคราวบน overlay
+  let roomEl=$('room303-overlay');
+  if(!roomEl){
+    roomEl=document.createElement('div');roomEl.id='room303-overlay';
+    roomEl.style.cssText='position:absolute;top:34px;left:0;right:0;bottom:110px;z-index:800;background:#05060a;overflow:hidden;';
+    // ผนังห้อง
+    roomEl.innerHTML=`
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,#06080e,#08090f);"></div>
+      <!-- หน้าต่าง -->
+      <div id="room-win" style="position:absolute;top:20px;left:30px;width:80px;height:60px;background:rgba(10,20,40,.8);border:4px solid #1a1a2a;box-shadow:inset 0 0 20px rgba(0,0,50,.5);">
+        <div style="position:absolute;inset:4px;background:linear-gradient(180deg,rgba(5,10,30,.9),rgba(2,5,15,.95));"></div>
+        <div style="position:absolute;top:50%;left:0;right:0;height:2px;background:#1a1a2a;"></div>
+        <div style="position:absolute;left:50%;top:0;bottom:0;width:2px;background:#1a1a2a;"></div>
+      </div>
+      <!-- กระจกบาน -->
+      <div id="room-mirror" style="position:absolute;top:15px;right:20px;width:65px;height:90px;background:rgba(20,25,35,.7);border:5px solid #2a2a3a;box-shadow:0 0 15px rgba(100,100,200,.1);"></div>
+      <!-- เตียง -->
+      <div style="position:absolute;bottom:55px;left:40px;width:120px;height:50px;background:#1a1208;border:3px solid #222;border-radius:4px 4px 0 0;">
+        <div style="position:absolute;top:0;left:0;right:0;height:18px;background:#2a1a0a;border-radius:4px 4px 0 0;"></div>
+      </div>
+      <!-- โต๊ะ -->
+      <div style="position:absolute;bottom:55px;right:20px;width:70px;height:40px;background:#1a1208;border:2px solid #222;"></div>
+      <!-- โคมไฟ -->
+      <div id="room-lamp" style="position:absolute;top:30px;right:100px;width:12px;height:30px;background:#1a1a0a;border:1px solid #222;">
+        <div style="position:absolute;bottom:-8px;left:-8px;width:28px;height:14px;background:rgba(200,160,0,.15);border-radius:50%;box-shadow:0 0 30px rgba(200,160,0,.1);"></div>
+      </div>
+      <!-- พื้น -->
+      <div style="position:absolute;bottom:0;left:0;right:0;height:55px;background:linear-gradient(180deg,#0d0c0a,#080806);border-top:2px solid #111;"></div>
+      <!-- ลายพื้นไม้ -->
+      <div style="position:absolute;bottom:0;left:0;right:0;height:55px;background:repeating-linear-gradient(90deg,transparent,transparent 30px,rgba(255,255,255,.02) 30px,rgba(255,255,255,.02) 31px);pointer-events:none;"></div>
+      <!-- คำมอดในห้อง -->
+      <div id="km-room" style="position:absolute;bottom:56px;left:180px;">
+        <div class="spr"><div class="spr-hat"></div><div class="spr-head"><div class="spr-el L"></div><div class="spr-el R"></div><div class="spr-mouth"></div></div><div class="spr-body"></div><div class="spr-leg L"></div><div class="spr-leg R"></div></div>
+      </div>
+    `;
+    $('G').appendChild(roomEl);
+  }
+  await fi(300);
+
+  dialog([
+    L('คำมอด','*เปิดไฟ* เออ... ทุกอย่างปกติดี ไม่มีอะไรเลย'),
+    L('ระบบ','*นั่งลงบนเตียง* เหนื่อยมาก... หลับตาแป๊บหนึ่ง'),
+    L('ระบบ','...'),
+    L('ระบบ','*ความเงียบของห้อง*'),
+    L('ระบบ','...'),
+  ],()=>roomSpookSequence());
+}
+
+async function roomSpookSequence(){
+  // ทำให้หน้าต่างกะพริบ
+  const win=$('room-win');
+  const mirror=$('room-mirror');
+  let blink=0;
+  const blinkIv=setInterval(()=>{
+    blink++;
+    if(win) win.style.boxShadow=blink%2===0?'inset 0 0 20px rgba(0,0,50,.5)':'inset 0 0 30px rgba(80,0,80,.3)';
+  },300);
+
+  dialog([
+    L('ระบบ','*เสียงขีดข่วนเบาๆ — มาจากกระจก*'),
+    L('คำมอด','อะไร? *ลุกขึ้น หันไปมอง*'),
+  ],async()=>{
+    clearInterval(blinkIv);
+    // กระจกสว่างขึ้น เขียนข้อความ
+    if(mirror){
+      mirror.style.transition='all .8s';
+      mirror.style.background='rgba(30,20,50,.9)';
+      mirror.style.boxShadow='0 0 25px rgba(150,0,200,.4)';
+      // เพิ่มรอยมือ
+      const hand=document.createElement('div');
+      hand.style.cssText='position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+      hand.innerHTML='<div style="font-size:9px;color:rgba(180,0,180,.8);line-height:1.6;text-align:center;letter-spacing:1px;">เจ้า<br>พาข้า<br>กลับมา<br>ด้วย</div>';
+      mirror.appendChild(hand);
+    }
+    sfxGhost();
+    await sleep(1000);
+    dialog([
+      L('ผีในห้อง 303','"เจ้าพาข้ากลับมาด้วย"'),
+      L('คำมอด','...'),
+      L('ระบบ','*เสียงเหมือนลมหายใจ ดังมาจากใต้เตียง*'),
+      L('คำมอด','ใครอยู่ในห้องนี้!!'),
+      L('ระบบ','*เสียงประตูตู้เสื้อผ้าถูกเปิดจากข้างใน — ช้าๆ*'),
+    ],()=>kmBadassScene());
+  });
+}
+
+async function kmBadassScene(){
+  // ฉากคำมอดพูดประโยคเท่ — ภาพหน้าใหญ่
+  sfxDoorSlam();
+  await sleep(200);
+
+  // ซ่อน room overlay ชั่วคราว สร้าง closeup face scene
+  const roomEl=$('room303-overlay');
+
+  // สร้าง closeup overlay
+  const closeup=document.createElement('div');
+  closeup.id='km-closeup';
+  closeup.style.cssText=`position:absolute;top:34px;left:0;right:0;bottom:110px;z-index:900;
+    background:radial-gradient(ellipse at 50% 40%,#1a0a00,#000);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;`;
+  closeup.innerHTML=`
+    <!-- หน้าคำมอดขนาดใหญ่ -->
+    <div id="km-face-big" style="position:relative;width:90px;height:110px;margin-bottom:16px;">
+      <div style="position:absolute;top:-14px;left:-2px;width:94px;height:16px;background:#1a1000;border:3px solid #000;border-radius:4px 4px 0 0;"></div>
+      <div style="width:90px;height:110px;background:#c87030;border:4px solid #000;border-radius:28px 28px 16px 16px;position:relative;box-shadow:0 0 40px rgba(200,100,0,.25);">
+        <!-- รอยแผล/เหนื่อย -->
+        <div style="position:absolute;top:18px;left:6px;width:16px;height:2px;background:#7a3820;border-radius:2px;transform:rotate(-5deg);"></div>
+        <div style="position:absolute;top:18px;right:6px;width:16px;height:2px;background:#7a3820;border-radius:2px;transform:rotate(5deg);"></div>
+        <!-- ตา — มองตรง เด็ดเดี่ยว -->
+        <div id="km-eye-big-l" style="position:absolute;top:28px;left:14px;width:10px;height:10px;background:#000;border-radius:50%;box-shadow:0 0 4px #000;"></div>
+        <div id="km-eye-big-r" style="position:absolute;top:28px;right:14px;width:10px;height:10px;background:#000;border-radius:50%;box-shadow:0 0 4px #000;"></div>
+        <!-- คิ้วขมวด -->
+        <div style="position:absolute;top:22px;left:12px;width:18px;height:3px;background:#5a2810;border-radius:2px;transform:rotate(-8deg);transform-origin:right center;"></div>
+        <div style="position:absolute;top:22px;right:12px;width:18px;height:3px;background:#5a2810;border-radius:2px;transform:rotate(8deg);transform-origin:left center;"></div>
+        <!-- ปาก — ยิ้มน้อยๆ ดูอันตราย -->
+        <div id="km-mouth-big" style="position:absolute;bottom:22px;left:50%;transform:translateX(-50%);width:26px;height:4px;background:#500;border-radius:2px 2px 4px 4px;"></div>
+        <!-- รอยถลอกที่แก้ม -->
+        <div style="position:absolute;top:38px;left:8px;width:8px;height:2px;background:rgba(180,60,30,.5);border-radius:2px;transform:rotate(15deg);"></div>
+      </div>
+    </div>
+    <!-- ผ้ายันต์ในมือ -->
+    <div id="yant-cloth" style="font-size:28px;margin-bottom:8px;opacity:0;transition:opacity .6s;">🧿</div>
+    <!-- ชื่อ -->
+    <div style="font-size:10px;color:#800;letter-spacing:4px;margin-bottom:4px;">— คำมอด —</div>
+    <!-- ประโยค -->
+    <div id="km-quote" style="font-size:13px;color:#ddd;text-align:center;padding:0 24px;line-height:1.8;font-family:'Sarabun';font-weight:300;min-height:60px;"></div>
+  `;
+  $('G').appendChild(closeup);
+  if(roomEl) roomEl.style.display='none';
+
+  await fi(200);
+  await sleep(300);
+
+  // แสดงผ้ายันต์
+  const yantCloth=closeup.querySelector('#yant-cloth');
+  if(yantCloth){yantCloth.style.opacity='1';sfxYant();}
+  await sleep(600);
+
+  // พิมพ์ประโยคที่ 1
+  const quoteEl=closeup.querySelector('#km-quote');
+  await typeBig(quoteEl,'หึ...');
+  await sleep(800);
+  await typeBig(quoteEl,'มันยังไม่จบสินะ....');
+  await sleep(1200);
+
+  // animation พันผ้า
+  if(yantCloth){
+    yantCloth.style.transform='rotate(15deg) scale(1.2)';
+    yantCloth.style.transition='all .4s';
+    sfxPick();
+  }
+  await sleep(500);
+
+  await typeBig(quoteEl,'*พันผ้ายันต์รอบมือ ช้าๆ*');
+  await sleep(1000);
+  await typeBig(quoteEl,'"อยากลองดีกับกูหนักนะ..."');
+  await sleep(800);
+
+  // ตาเปลี่ยน — สายตาดุ
+  const eyeL=closeup.querySelector('#km-eye-big-l');
+  const eyeR=closeup.querySelector('#km-eye-big-r');
+  const mouth=closeup.querySelector('#km-mouth-big');
+  if(eyeL){eyeL.style.boxShadow='0 0 8px rgba(200,0,0,.4)';eyeL.style.background='#1a0000';}
+  if(eyeR){eyeR.style.boxShadow='0 0 8px rgba(200,0,0,.4)';eyeR.style.background='#1a0000';}
+  if(mouth){mouth.style.background='#800';mouth.style.borderRadius='4px 4px 2px 2px';}
+  tn(120,'sine',.3,.06); // เสียงลึกๆ
+
+  await sleep(500);
+  await typeBig(quoteEl,'"...ไหนลองมาสิ"');
+  await sleep(1500);
+
+  // ตัดไปฉาก ghost reveal
+  await fo(500);
+  closeup.remove();
+  if(roomEl) roomEl.style.display='block';
+  await ghostReveal();
+}
+
+// helper พิมพ์ข้อความทีละตัวใน element ที่กำหนด
+async function typeBig(el, txt){
+  if(!el)return;
+  for(const ch of txt){
+    el.textContent+=ch;
+    sfxType();
+    await sleep(45);
+  }
+  el.textContent+='\n';
+}
+
+async function ghostReveal(){
+  sfxScare();
+  await sleep(200);
+  sfxGhost();
+  await fo(380);
+
+  // ลบ room overlay ถ้ายังอยู่
+  const roomEl=$('room303-overlay');if(roomEl)roomEl.remove();
+
+  const gr=$('ghost-rev');
+  gr.style.display='block';
+  gr.style.background='rgba(0,0,0,0)';
+  showSc('sc10');
+  await fi(380);
+
+  setTimeout(()=>{ gr.style.background='rgba(5,0,10,.9)'; gr.style.transition='background 2s'; },100);
+  sfxGhost();
+  await sleep(3000);
+
+  // Dialog สุดท้าย — เท่และน่ากลัว
+  dialog([
+    L('ระบบ','ผีออกมาจากตู้เสื้อผ้า...'),
+    L('ระบบ','แต่คำมอดไม่หนี'),
+    L('คำมอด','*ยืนตรง มองตรง* กูรู้ว่าแกตามมา ตั้งแต่ออกจากทุ่งนาแล้ว'),
+    L('ผีในห้อง 303','...เจ้ารู้?'),
+    L('คำมอด','*หัวเราะเบาๆ* กูเป็นจอมโจรขมังเวทย์มาก่อน แก้ผ้ายันต์รอบมือแล้วจะบอกว่าไม่รู้ได้ยังไง'),
+    L('คำมอด','แต่วันนี้กูเหนื่อยแล้ว — พรุ่งนี้ค่อยสอนมารยาทกัน'),
+    L('ผีในห้อง 303','...'),
+    L('ระบบ','*ความเงียบหนักอึ้ง*'),
+    L('ระบบ','ทุ่งนาสงบแล้ว แต่ห้อง 303 เพิ่งเริ่มต้น...'),
+    L('ระบบ','━━━━━━━━━━━━━━━━━━━━━━━'),
+    L('ระบบ','คำมอด ภาค ๒ : ผีในห้อง 303'),
+    L('ระบบ','กำลังจะมา...'),
+  ]);
+}
+
+/* ════════════════════════════════════════════════
+   CHAPTER NAVIGATION
+   ════════════════════════════════════════════════ */
+async function gotoChapter(id){
+  G.moveState='NONE';$('ctrls').style.display='none';$('btn-act').style.display='none';$('btn-act').style.display='none';
+  await fo();showSc(id);G.currentChapter=id;
+  const tags={sc01:'Chapter 1 · คืนที่ฟ้าผิดใจ',sc02:'Chapter 2 · เผชิญเงาแดง',sc03:'Chapter 3 · คุกใต้ดิน',sc04:'Chapter 4 · หมู่บ้านตกกลางคืน',sc05:'Chapter 5 · ตลาดกลางคืน',sc07:'Chapter 6 · ศาลเจ้าร้าง',sc08:'Chapter 7 · ทุ่งนาสังหาร',sc09:'Chapter 8 · เผชิญหน้า',sc10:'Chapter 9 · กลับบ้าน'};
+  setChTag(tags[id]||id);
+  await fi();
+}
+
+/* ════════════════════════════════════════════════
+   CHAPTER CALLBACKS
+   ════════════════════════════════════════════════ */
+function goToBoss(){
+  gotoChapter('sc09').then(()=>{
+    saveCheckpoint('sc09');
+    dialog([
+      L('ระบบ','คำมอดวิ่งออกจากทุ่งมาถึงบ้านตัวเองที่ยโสธร แต่พบว่าครอบครัวถูกจับตัวไว้'),
+      L('หมอผีคลั่ง','ฮ่าฮ่า... มาเองเลย คำมอด! ข้ารอนายมาเป็นอาทิตย์'),
+      L('คำมอด','ปล่อยครอบครัวข้ามา! พวกเขาไม่มีส่วนเกี่ยวข้อง!'),
+      L('หมอผีคลั่ง','ก็ได้ ถ้านายมอบวิญญาณให้ข้า'),
+      L('คำมอด','...ไม่มีทาง', [
+        {text:'*มองยันต์ในมือ*', next:[
+          L('คำมอด','ยันต์ 3 ชิ้น... พลังเวทย์กลับมาแล้ว!'),
+          L('หมอผีคลั่ง','เจ้าทำได้ยังไง!! ข้าสะกดมันไว้แล้ว!'),
+          L('คำมอด','สะกดไม่แน่นพอ ตอนนี้แล้วแต่ข้าเลือก'),
+        ]},
+      ]),
+      L('ระบบ','ถึงเวลาตัดสินใจ!'),
+    ],()=>{$('fc-desc').textContent='คำมอดมีพลังทั้งสองทาง\nสิ่งที่เลือกจะเปลี่ยนชีวิตเขาตลอดไป';$('final-choice').style.display='flex';});
+  });
+}
+
+/* ════════════════════════════════════════════════
+   MOVEMENT LOOP  (single, clean, no duplicates)
+   ════════════════════════════════════════════════ */
+let _lastStep2=0;
+let _walkStep=0;
+// Track walking state per scene for animation
+let _isWalking=false;
+
+function setWalk(llId,lrId,val){
+  const ll=$(llId),lr=$(lrId);
+  if(!ll||!lr)return;
+  if(val){ll.classList.add('walk');lr.classList.add('walk');}
+  else{ll.classList.remove('walk');lr.classList.remove('walk');}
+}
+
+setInterval(()=>{
+  if(!['HALL3','V4','V5','APT'].includes(G.moveState)) return;
+  _walkStep++;
+  const moving=KEYS.l||KEYS.r;
+  const SPD=3.5;  // ← เร็วขึ้น
+
+  if(G.moveState==='HALL3'){
+    const km=$('km-cell');if(!km)return;
+    let cx=parseFloat(km.style.left)||130;
+    if(KEYS.r&&cx<315){cx+=SPD;}
+    if(KEYS.l&&cx>18){cx-=SPD;}
+    km.style.left=cx+'px';
+    const now=Date.now();if(moving&&now-_lastStep2>240){_lastStep2=now;sfxStep('stone');}
+    setWalk('ll-c','lr-c',moving);
+    if(cx>275&&G.hammer){$('btn-act').style.display='flex';$('btn-act').textContent='ทุบท่อ!';$('act-lbl').textContent='ทางออก';$('act-lbl').style.display='block';}
+    else{$('btn-act').style.display='none';$('act-lbl').style.display='none';}
+  }
+
+  if(G.moveState==='V4'){
+    const scroll=document.querySelector('#sc04 #sc04-scroll');if(!scroll)return;
+    if(KEYS.r){G.scr.v4=Math.max(-1750,G.scr.v4-SPD);}
+    if(KEYS.l){G.scr.v4=Math.min(0,G.scr.v4+SPD);}
+    scroll.style.transform=`translateX(${G.scr.v4}px)`;
+    const now=Date.now();if(moving&&now-_lastStep2>240){_lastStep2=now;sfxStep('dirt');}
+    setWalk('sc04-ll','sc04-lr',moving);
+    if(G.scr.v4<=-1640&&!G.villageEnd){G.villageEnd=true;ch5();}
+  }
+
+  if(G.moveState==='V5'){
+    const scroll=document.querySelector('#sc05 #sc05-scroll');if(!scroll)return;
+    if(KEYS.r){G.scr.v5=Math.max(-1750,G.scr.v5-SPD);}
+    if(KEYS.l){G.scr.v5=Math.min(0,G.scr.v5+SPD);}
+    scroll.style.transform=`translateX(${G.scr.v5}px)`;
+    const now=Date.now();if(moving&&now-_lastStep2>240){_lastStep2=now;sfxStep('dirt');}
+    setWalk('sc05-ll','sc05-lr',moving);
+    if(G.scr.v5<=-1620&&!G.marketEnd){G.marketEnd=true;ch6();}
+  }
+
+  if(G.moveState==='APT'){
+    const scroll=$('apt-scroll');if(!scroll)return;
+    if(KEYS.r){G.scr.apt=Math.max(-1060,G.scr.apt-SPD);}
+    if(KEYS.l){G.scr.apt=Math.min(0,G.scr.apt+SPD);}
+    scroll.style.transform=`translateX(${G.scr.apt}px)`;
+    const now=Date.now();if(moving&&now-_lastStep2>240){_lastStep2=now;sfxStep('cement');}
+    setWalk('apt-ll','apt-lr',moving);
+    // KM ยึดอยู่ที่ 120px บนหน้าจอเสมอ
+    const aptKm=$('apt-km');if(aptKm) aptKm.style.left='120px';
+    // door303 อยู่ที่ scroll x=390 → screen x = 390+scr.apt
+    const doorScr=390+G.scr.apt;
+    if(Math.abs(doorScr-140)<80){
+      $('btn-act').style.display='flex';
+      $('btn-act').textContent='🚪 เปิดห้อง 303';
+      $('act-lbl').textContent='กดเพื่อเข้า';
+    } else {
+      $('btn-act').style.display='none';
+      $('act-lbl').textContent='';
+    }
+  }
+},28);
+
+/* ACTION BUTTON */
+$('btn-act').onclick=()=>{
+  sfxClick();
+  if(G.moveState==='HALL3'&&G.hammer){
+    G.moveState='NONE';$('ctrls').style.display='none';$('btn-act').style.display='none';
+    sfxHammer();flashScreen();shakeG();particle(280,170,'💥');
+    dialog([L('คำมอด','*เปรี้ยงงง!* ท่อแตกแล้ว! ออกไปได้!'),L('ระบบ','มุดท่อออกมา... ไม่เจอถนน เจอทุ่งนาที่ไม่สิ้นสุด')],()=>ch4());
+  }
+  if(G.moveState==='FIELD') fieldAction();
+  if(G.moveState==='APT'){
+    const doorScr=390+G.scr.apt;
+    if(Math.abs(doorScr-140)<90) enterRoom303();
+  }
+};
+
+/* KEYBOARD */
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowLeft')KEYS.l=1;if(e.key==='ArrowRight')KEYS.r=1;
+  if(e.key==='ArrowUp')KEYS.u=1;if(e.key==='ArrowDown')KEYS.d=1;
+  if(e.key===' '||e.key==='Enter')nextLine();
+  if(e.key.toLowerCase()==='z')$('btn-act').click();
+});
+document.addEventListener('keyup',e=>{
+  if(e.key==='ArrowLeft')KEYS.l=0;if(e.key==='ArrowRight')KEYS.r=0;
+  if(e.key==='ArrowUp')KEYS.u=0;if(e.key==='ArrowDown')KEYS.d=0;
+});
+['bu','bd','bl','br'].forEach((id,ki)=>{
+  const k=['u','d','l','r'][ki];
+  const el=$(id);
+  el.addEventListener('touchstart',e=>{e.preventDefault();KEYS[k]=1;},{passive:false});
+  el.addEventListener('touchend',  e=>{e.preventDefault();KEYS[k]=0;},{passive:false});
+  el.addEventListener('mousedown', ()=>KEYS[k]=1);
+  el.addEventListener('mouseup',   ()=>KEYS[k]=0);
+});
+
+/* ════════════════════════════════════════════════
+   CHAPTER FLOW  ch1→ch2→...→ch10
+   ════════════════════════════════════════════════ */
+async function ch1(){
+  await gotoChapter('sc01');
+  dialog([
+    L('ระบบ','ยโสธร — ถนนลูกรังตัดผ่านทุ่งนา คืนหนึ่งปี 2567'),
+    L('คำมอด','ถนนเส้นนี้มืดชิบหายเลย... ท้องฟ้าสีแดงแบบนี้ไม่ค่อยดีเลยนะ'),
+    L('คำมอด','*เปิดวิทยุ* เฮ้ แต่เสียงซ่าอีกแล้ว ซวยแล้ว'),
+    L('คำมอด','เครื่องยนต์สั่นๆ อีกแล้ว ไอ้รถเก่าแก่เอ๊ย... โอ้ย! ดับเลย!'),
+    L('ระบบ','รถดับกลางทางหลวง คำมอดลงไปเช็กเครื่องยนต์'),
+    L('คำมอด','*บ่น* ลงมาดูหน่อย ฟิวส์ขาดอีกหรือเปล่า...'),
+  ],()=>{
+    $('fpv-chick').style.display='block';showSc('sc02');sfxChicken();
+    setTimeout(()=>{
+      dialog([L('คำมอด','อะไร!! ไก่ผีบ้า *ตาลาย*'),L('ระบบ','เงาร่างสูงใหญ่ ตาแดงโพลง ปรากฏในความมืด')],()=>{
+        $('shadow-ent').style.right='25px';sfxScare();
+        setTimeout(()=>{
+          dialog([L('คำมอด','เฮ้ย! ใครวะ! ตาแดงแป๊ดเลย อย่าเข้ามา!!'),L('ระบบ','*เปรี้ยง!* คำมอดโดนฟาดหัวสลบ...')],async()=>{
+            await fo(800);showSc('sc03');setChTag('Chapter 2 · คุกใต้ดิน');G.currentChapter='sc03';saveCheckpoint('sc03');
+            await fi(800);
+            dialog([
+              L('คำมอด','โอ๊ยยย... หัวปูดเลย... ที่นี่มันที่ไหน? มืดมาก'),
+              L('คำมอด','*มองรอบ* โครงกระดูกไก่เต็มเลย... คุกใต้ดินนี่หว่า'),
+              L('คำมอด','*ลองขยับ* เวทย์ถูกสะกด... ร่างกายอ่อนแอ'),
+              L('ระบบ','ต้องใช้วิชาโจรเก่า "งัดแงะ" เพื่อเปิดกรง'),
+              L('คำมอด','วิชางัดแงะ... ไม่ได้ใช้มา 10 ปีแล้ว ลองดู!'),
+            ],()=>startLock());
+          });
+        },1400);
+      });
+    },700);
+  });
+}
+
+function ch4(){
+  gotoChapter('sc04').then(()=>{
+    saveCheckpoint('sc04');
+    dialog([
+      L('ระบบ','คำมอดออกจากทุ่งมาถึงถนนหมู่บ้าน ชาวบ้านตกใจเมื่อเห็นหน้าเขา'),
+      L('คำมอด','*มองรอบ* ยโสธร... บ้านยังอยู่ไกล ต้องผ่านหมู่บ้านนี้ก่อน'),
+      L('ระบบ','เดินไปทางขวา คุยกับชาวบ้านระหว่างทาง'),
+    ],()=>{$('ctrls').style.display='flex';G.moveState='V4';G.scr.v4=0;G.villageEnd=false;});
+  });
+}
+function ch5(){
+  G.moveState='NONE';
+  gotoChapter('sc05').then(()=>{
+    saveCheckpoint('sc05');
+    dialog([
+      L('ระบบ','ปลายหมู่บ้านมีตลาดยามค่ำ แม้ดึกแต่ยังมีคนอยู่'),
+      L('คำมอด','*มองแผงขาย* หิวแล้วด้วย ซื้อกินหน่อย'),
+      L('ระบบ','เดินต่อไปทางขวาเพื่อออกจากตลาด หรือคุยกับพ่อค้าแม่ขาย'),
+    ],()=>{$('ctrls').style.display='flex';G.moveState='V5';G.scr.v5=0;G.marketEnd=false;});
+  });
+}
+function ch6(){
+  G.moveState='NONE';
+  gotoChapter('sc07').then(()=>{
+    saveCheckpoint('sc07');
+    // add candles
+    [55,100,148,200,248].forEach((x,i)=>{
+      const c=document.createElement('div');c.className='r-candle';c.style.left=x+'px';c.textContent='🕯';c.style.animationDelay=(i*.03)+'s';$('sc07').appendChild(c);
+    });
+    // elder
+    const elder=document.createElement('div');elder.style.cssText='position:absolute;bottom:76px;right:48px;cursor:pointer;z-index:50;text-align:center;';
+    elder.innerHTML='<div style="font-size:9px;color:#444;animation:blink 1.2s infinite;">คุย</div><div style="font-size:32px;opacity:.75;">👴</div>';
+    elder.onclick=()=>{
+      if(G.npcDone['elder'])return;
+      sfxClick();
+      const prevState=G.moveState;
+      G.moveState='NONE';
+      dialog([
+        L('วิญญาณผู้เฒ่า','*เสียงสั่น* คำมอด... ข้ารอเจ้ามานาน'),
+        L('คำมอด','ท่านเป็นใคร? ทำไมรู้จักข้า?'),
+        L('วิญญาณผู้เฒ่า','ข้าคือวิญญาณผู้พิทักษ์ทุ่งนาแห่งนี้ หมอผีคลั่งฆ่าข้าตั้งแต่ยังมีชีวิต'),
+        L('วิญญาณผู้เฒ่า','มันใช้พลังชีวิตข้าเลี้ยงพราย เจ้าต้องเก็บยันต์ทองในทุ่ง 3 ชิ้น'),
+        L('คำมอด','หมอผีคลั่งอยู่ที่ไหน?'),
+        L('วิญญาณผู้เฒ่า','บ้านของเจ้าเอง... มันรออยู่แล้ว พร้อมครอบครัวของเจ้า'),
+        L('คำมอด','...ครอบครัวข้า!!'),
+        L('วิญญาณผู้เฒ่า','รีบไป... และระวังสิ่งที่จะกลับไปกับเจ้าด้วย',[
+          {text:'ท่านหมายความว่าอะไร?',next:[
+            L('วิญญาณผู้เฒ่า','เจ้าจะรู้เอง *จางหายไป* โชคดีนะ คำมอด'),
+          ]},
+          {text:'ขอบคุณ ข้าจะรีบ'},
+        ]),
+      ],()=>{
+        G.npcDone['elder']=true;
+        setTimeout(()=>{
+          gotoChapter('sc08').then(()=>{
+            saveCheckpoint('sc08');
+            dialog([
+              L('ระบบ','ทุ่งนาที่ไม่มีวันสิ้นสุด ต้นข้าวแหลมคมเหมือนใบมีด หมอกปกคลุม'),
+              L('คำมอด','*มองรอบ* พรายบุญมีมันตามข้ามาตลอด ต้องหนีให้ได้'),
+              L('ระบบ','เก็บยันต์ 3 ชิ้น แล้วกดออกจากทุ่ง!'),
+              L('ระบบ','💡 กด [ซ่อนตัว] เพื่อหลบในพุ่มหญ้า พรายจะมองไม่เห็น'),
+            ],()=>startFieldGame());
+          });
+        },800);
+      });
+    };
+    $('sc07').appendChild(elder);
+  });
+}
+
+/* ════════════════════════════════════════════════
+   BOOT
+   ════════════════════════════════════════════════ */
+function startGame(){
+  initAC();sfxClick();
+  $('title').style.display='none';
+  $('hud').style.display='flex';
+  updateHUD();
+  buildStars('sc01-stars',55);
+  // build worlds
+  buildWorld('sc04',1900,[
+    {id:'lungs',x:400,ico:'👴',lines:[
+      L('ลุงแสง','โอ้โห! คำมอด! นายไม่ตายเหรอ? ข่าวลือว่าโดนพรายจับไปแล้ว'),
+      L('คำมอด','ข้าก็เกือบตาย ลุงแสง... แต่ยังหายใจอยู่'),
+      L('ลุงแสง','ระวังด้วยนะ หมอผีคลั่งไม่ธรรมดา ข้าได้ยินว่ามันอยู่ที่นาร้างด้านใต้',[
+        {text:'ลุงรู้อะไรเพิ่มเติมไหม?',next:[
+          L('ลุงแสง','ลูกชายหมอผีคลั่งตายกลางทุ่งนา ตั้งแต่นั้นมาจิตใจมันแตกสลาย'),
+          L('คำมอด','...น่าเวทนา แต่นั่นไม่ใช่เหตุผลทำร้ายคนอื่น'),
+        ]},
+        {text:'ขอบคุณลุง ลาก่อน'},
+      ]),
+    ]},
+    {id:'pabuay',x:850,ico:'👵',lines:[
+      L('ป้าบัวลอย','คำมอด! ตัวจริงไหม? ป้าเห็นเงาวิ่งผ่านบ้านป้า เกือบใจวายเลย!'),
+      L('คำมอด','ป้าสบายดีไหม? มีคนบาดเจ็บในหมู่บ้านไหม?'),
+      L('ป้าบัวลอย','ไม่มีใครบาดเจ็บ แต่วัวหายไปสามตัว! ชาวบ้านจะหนีหมดถ้าไม่มีใครแก้ไข',[
+        {text:'ป้ามีอะไรให้บ้างไหม?',next:[
+          L('ป้าบัวลอย','*ควัก* นี่... ยาดมตราม้า เผื่อนายหน้ามืด อิอิ'),
+          L('คำมอด','...ขอบคุณป้าครับ 😅'),
+        ]},
+        {text:'จะรีบจัดการครับ'},
+      ]),
+    ]},
+    {id:'kidboy',x:1300,ico:'👦',lines:[
+      L('เด็กชาย','ลุงๆ! ลุงเห็นผีไหม? เมื่อคืนหนูเห็นตาแดงลอยผ่านหน้าต่าง!'),
+      L('คำมอด','เห็นจริงๆ เหรอ? หนูอย่าไปใกล้ทุ่งนาคืนนี้นะ'),
+      L('เด็กชาย','แต่ลูกวัวหนูอยู่ในนาลุง... *ตาแดง* แต่หนูกลัวจริงๆ',[
+        {text:'หนูรู้ว่าผีอยู่ตรงไหน?',next:[
+          L('เด็กชาย','*ชี้ทิศใต้* เห็นมันเดินออกจากทิศที่มีศาลเจ้าเก่าน่ะลุง'),
+          L('คำมอด','ขอบคุณนะ ลุงจัดการให้'),
+        ]},
+        {text:'กลับบ้านเถอะนะ'},
+      ]),
+    ]},
+  ],()=>ch5());
+  buildWorld('sc05',1900,[
+    {id:'merchant',x:480,ico:'👩',lines:[
+      L('แม่ค้า','สวัสดีค่ะ! มีทุกอย่างเลย ยันต์ สมุนไพร ของขลัง'),
+      L('คำมอด','มีอะไรช่วยถอนอาคมบ้างไหมครับ?'),
+      L('แม่ค้า','มีสิ! ยันต์มหาถอนของป้าสาย... แต่แพงหน่อยนะ',[
+        {text:'ช่วยหาดอกข้าวดำ 3 ดอกได้ไหม?',next:[
+          L('แม่ค้า','*กระซิบ* ถ้าหาได้ ป้าให้ยันต์ฟรีเลยล่ะ!'),
+          L('คำมอด','โอเคครับ จะหามาให้'),
+          L('แม่ค้า','ระวังตัวด้วยนะคะ!'),
+        ]},
+        {text:'ขอบคุณครับ'},
+      ]),
+    ]},
+    {id:'oldman2',x:950,ico:'🧓',lines:[
+      L('เพื่อนบ้าน2','*เดินถือตะเกียง* นายคือคำมอดไหม? คนที่หายหน้าไปอาทิตย์?'),
+      L('คำมอด','ใช่ครับ กลับมาแล้ว'),
+      L('เพื่อนบ้าน2','โห... ข้าได้ยินว่านายโดนพรายบุญมีจับตัว เป็นยังไงบ้าง?'),
+      L('คำมอด','รอดมาได้ยังไงก็ไม่รู้ 555',[
+        {text:'ลุงรู้จักหมอผีคลั่งไหม?',next:[
+          L('เพื่อนบ้าน2','รู้จักสิ! ตอนยังสาวๆ มันเป็นหมอผีดีมีคุณธรรมนะ แต่พอลูกชายตาย มันกลายเป็นคนละคน'),
+          L('คำมอด','...เศร้าจริงๆ'),
+        ]},
+        {text:'ขอบคุณครับ ลาก่อน'},
+      ]),
+    ]},
+    {id:'doctor',x:1400,ico:'🧙',lines:[
+      L('นายแพทย์ผี','*แว่นตากลม บุคลิกแปลก* เฮ้! นายมีกลิ่นอาคมสะกดติดตัวมาด้วย'),
+      L('คำมอด','อ้าว... จริงหรือ?'),
+      L('นายแพทย์ผี','ใช่! แต่กลิ่นมันอ่อนมากแล้ว อีกแป๊บเดียวก็หลุดเอง ข้าเป็นหมอผีดีนะ',[
+        {text:'ช่วยถอนให้ได้ไหม?',next:[
+          L('นายแพทย์ผี','ได้สิ! แต่... ข้าลืมวิธีแล้ว 555'),
+          L('คำมอด','...ขอบคุณมากนะครับ 😑'),
+        ]},
+        {text:'โอเค ขอบคุณครับ'},
+      ]),
+    ]},
+  ],()=>ch6());
+  buildApt();
+  ch1();
+}
+
+window.onload=()=>{ $('fade').style.opacity='0'; };
+</script>
+</body>
+</html>
